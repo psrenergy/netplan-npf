@@ -27,57 +27,56 @@ class Starpoint:
 class NpFile:
     """Represents a study stage/block data."""
     def __init__(self):
-
+        self.revision = 1
         """Case title."""
         self.titu = ""
 
-        self.dbar = []
-        self.dbae = []
-        self.dare = []
-        self.dreg = []
-        self.down = []
-        self.dsis = []
-        self.ddem = []
-        self.dger = []
-        self.dbsh = []
-        self.dlin = []
-        self.dshl = []
-        self.dtrf = []
-        self.dt3e = []
-        self.dtr3 = []
-        self.dcsc = []
-        self.dsvc = []
+        self.buses = []
+        self.middlepoint_buses = []
+        self.areas = []
+        self.regions = []
+        self.systems = []
+        self.demands = []
+        self.generators = []
+        self.bus_shunts = []
+        self.lines = []
+        self.line_shunts = []
+        self.transformers = []
+        self.equivalent_transformers = []
+        self.three_winding_transformers = []
+        self.cscs = []
+        self.svcs = []
 
     def _append_elements(self, contents, header, comment, elements):
         # type: (list, str, str, list) -> None
         contents.append(header)
         contents.append(comment)
         for element in elements:
-            contents.append(element)
-        contents.append("9999999")
+            contents.append(str(element))
+        contents.append("END")
 
     def __str__(self):
-        contents = ["TITU", self.titu, "DBAR"]
+        contents = ["NPF_REVISION", str(self.revision),
+                    "TITU", self.titu, ]
 
         header_elements_pairs = (
-            (Dbar.header, Dbar.comment, self.dbar),
-            (Dbar.header, Dbar.comment, self.dbae),
-            (Dare.header, Dare.comment, self.dare),
-            (Dreg.header, Dreg.comment, self.dreg),
-            (Down.header, Down.comment, self.down),
-            (Dsis.header, Dsis.comment, self.dsis),
-            (Ddem.header, Ddem.comment, self.ddem),
-            (Dger.header, Dger.comment, self.dger),
-            (Dbsh.header, Dbsh.comment, self.dbsh),
-            (Dlin.header, Dlin.comment, self.dlin),
-            (Dlin.header, Dlin.comment, self.dlin),
-            (Dshl.header, Dshl.comment, self.dshl),
-            (Dtrf.header, Dtrf.comment, self.dtrf),
-            (Dtrf.header, Dtrf.comment, self.dt3e),
-            (Dtr3.header, Dtr3.comment, self.dtr3),
-            (Dtr3.header, Dtr3.comment, self.dtr3),
-            (Dcsc.header, Dcsc.comment, self.dcsc),
-            (Dsvc.header, Dsvc.comment, self.dsvc),
+            (Bus.header, Bus.comment, self.buses),
+            (Bus.header, Bus.comment, self.middlepoint_buses),
+            (Area.header, Area.comment, self.areas),
+            (Region.header, Region.comment, self.regions),
+            (System.header, System.comment, self.systems),
+            (Demand.header, Demand.comment, self.demands),
+            (Generator.header, Generator.comment, self.generators),
+            (BusShunt.header, BusShunt.comment, self.bus_shunts),
+            (Line.header, Line.comment, self.lines),
+            (Line.header, Line.comment, self.lines),
+            (LineShunt.header, LineShunt.comment, self.line_shunts),
+            (Transformer.header, Transformer.comment, self.transformers),
+            (Transformer.header, Transformer.comment, self.equivalent_transformers),
+            (ThreeWindingTransformer.header, ThreeWindingTransformer.comment, self.three_winding_transformers),
+            (ThreeWindingTransformer.header, ThreeWindingTransformer.comment, self.three_winding_transformers),
+            (ControlledSeriesCapacitor.header, ControlledSeriesCapacitor.comment, self.cscs),
+            (StaticVarCompensator.header, StaticVarCompensator.comment, self.svcs),
         )
 
         for header, comment, elements in header_elements_pairs:
@@ -86,7 +85,13 @@ class NpFile:
         return "\n".join(contents)
 
 
-class RecordType:
+def _to_str(value):
+    if isinstance(value, str):
+        return "".join(["\"", value, "\""])
+    return str(value)
+
+
+class RecordType(object):
     header = ""
     comment = ""
 
@@ -99,46 +104,32 @@ class RecordType:
             if var != "header" and var != "comment":
                 # TODO: values that are string already should be escaped with
                 #  quotes.
-                values.append(str(value))
+                values.append(_to_str(value))
         return ",".join(values)
 
     def __repr__(self):
         return self.__str__()
 
 
-class Dsis(RecordType):
+class System(RecordType):
     """System data."""
-    header = "DSIS"
+    header = "SYSTEM"
     comment = "('S','(........Name......)',S,(Ns)"
 
     def __init__(self):
-        super(Dsis, self).__init__()
+        super(System, self).__init__()
         self.id = ""
         self.name = ""
         self.ns = 0
 
 
-class Down(RecordType):
-    """Owner data."""
-    header = "DOWN"
-    comment = "('O','(........Name......)',(No),(Ns),'Is'"
-
-    def __init__(self):
-        super(Down, self).__init__()
-        self.id = ""
-        self.name = ""
-        self.no = 0
-        self.ns = 0
-        self.iscode = 0
-
-
-class Dreg(RecordType):
+class Region(RecordType):
     """Region data."""
-    header = "DREG"
+    header = "REGION"
     comment = "('R','(........Name......)',(Nr),(Ns),'Is'"
 
     def __init__(self):
-        super(Dreg, self).__init__()
+        super(Region, self).__init__()
         self.id = ""
         self.name = ""
         self.nr = 0
@@ -146,13 +137,13 @@ class Dreg(RecordType):
         self.icode = ""
 
 
-class Dare(RecordType):
+class Area(RecordType):
     """Area data."""
-    header = "DARE"
+    header = "AREA"
     comment = "('Ar)','(...............Anam...............)',(Na),(Ns),'Is',(Exchg),(ExMin),(ExMax)"
 
     def __init__(self):
-        super(Dare, self).__init__()
+        super(Area, self).__init__()
         self.id = ""
         self.name = ""
         self.na = 0
@@ -163,13 +154,13 @@ class Dare(RecordType):
         self.exmax = 0.0
 
 
-class Dbar(RecordType):
+class Bus(RecordType):
     """Bus data."""
-    header = "DBAR"
+    header = "BUS"
     comment = "(Bus.),'(...Name...)','O',(.kV.),(Ar),(Rg),(Si),'(..Date..)','C',(.Cost.),TB,CC,(Volt),(Angl),(Vmax),(Vmin),(Emax),(Emin),S,(Ow),'(.........Name24.......)'"
 
     def __init__(self):
-        super(Dare, self).__init__()
+        super(Bus, self).__init__()
         self.bus = 0
         self.name = ""
         self.o = ""
@@ -193,13 +184,13 @@ class Dbar(RecordType):
         self.name24 = ""
 
 
-class Ddem(RecordType):
+class Demand(RecordType):
     """Demand per bus (load) data."""
-    header = "DDEM"
+    header = "DEMAND"
     comment = "(Ndm),'(...DNam...)','O',(Bus.),'(...Bnam...)',(Nu),'(..Date..)','C',(Nd),(Nc),(PdemP),(QdemP),(PdemI),(QdemI),(PdemZ),(QdemZ)"
 
     def __init__(self):
-        super(Ddem, self).__init__()
+        super(Demand, self).__init__()
         self.ndm = 0
         self.dnam = ""
         self.o = 0
@@ -218,13 +209,13 @@ class Ddem(RecordType):
         self.qdemz = 0
 
 
-class Dger(RecordType):
+class Generator(RecordType):
     """Generator data."""
-    header = "DGER"
+    header = "GENERATOR"
     comment = "(Ng),'(..Name12..)','(...GNam...)','O',(Bus.),'(...Name...)','T',Nu,(Pmin),(Pmax),(Qmin),(Qmax),(PrbF),'(..Date..)','C',(Ktr.),'(.Ktr_Name.)',(TC),(Factor),Uc,(Pgen),(Qgen)"
 
     def __init__(self):
-        super(Dger, self).__init__()
+        super(Generator, self).__init__()
         self.ng = 0
         self.name12 = ""
         self.gnam = ""
@@ -249,13 +240,13 @@ class Dger(RecordType):
         self.qgen = 0
 
 
-class Dlin(RecordType):
+class Line(RecordType):
     """Line data."""
-    header = "DLIN"
+    header = "LINE"
     comment = "(Bfr.),(Bto.),Nc,'O','W',(.R%.),(.X%.),(MVAr),(.Rn.),(.Re.),(.Fp.),(.Cost.),'(..Date..)','C',(KeyC),TC,'(..Name12..)',( EF,(..Km..),S,'(................Name40................)'"
 
     def __init__(self):
-        super(Dlin, self).__init__()
+        super(Line, self).__init__()
         self.bfr = 0
         self.bto = 0
         self.nc = 0
@@ -279,13 +270,13 @@ class Dlin(RecordType):
         self.name40 = ""
 
 
-class Dbsh(RecordType):
+class BusShunt(RecordType):
     """Bus shunt data."""
-    header = "DBSH"
+    header = "BUS_SHUNT"
     comment = "(Ns),'(...Name...)','O',(Bus.),'(.Bus_Name.)',(Ktr.),'(.Ktr_Name.)','T',(CT),(Nu),(MVAr),(K$/Uni),'(..Date..)','C',(Uc)"
 
     def __init__(self):
-        super(Dbsh, self).__init__()
+        super(BusShunt, self).__init__()
         self.ns = 0
         self.name = 0
         self.o = 0
@@ -303,13 +294,13 @@ class Dbsh(RecordType):
         self.uc = 0
 
 
-class Dshl(RecordType):
+class LineShunt(RecordType):
     """Line shunt data."""
-    header = "DSHL"
+    header = "LINE_SHUNT"
     comment = "(Ns),'(...SNam...)','O',(Bfr.),(BTo.),Nc,(MVAr),'B',(K$/Uni),'(..Date..)','C',S,'(...LKey...)'"
 
     def __init__(self):
-        super(Dshl, self).__init__()
+        super(LineShunt, self).__init__()
         self.ns = 0
         self.snam = ""
         self.o = ""
@@ -325,13 +316,13 @@ class Dshl(RecordType):
         self.lkey = ""
 
 
-class Dtrf(RecordType):
+class Transformer(RecordType):
     """Two-winding transformer data."""
-    header = "DTRF"
+    header = "TRANSFORMER"
     comment = "(Bfr.),(Bto.),Nc,'O','W',(.R%.),(.X%.),(Tmn),(Tmx),(Phn),(Phx),TC,(BCn.),Nt,(.Rn.),(.Re.),(.Fp.),(.Cost.),'(..Date..)','C',(KeyC),'(...Name...)',( EF,'(................Name40................)',S,(Tap),(Phs),(Fmin),(Fmax),(FEmn),(FEmx)"
 
     def __init__(self):
-        super(Dtrf, self).__init__()
+        super(Transformer, self).__init__()
         self.bfr = 0
         self.bto = 0
         self.nc = 0
@@ -365,13 +356,13 @@ class Dtrf(RecordType):
         self.femx = 0
 
 
-class Dtr3(RecordType):
+class ThreeWindingTransformer(RecordType):
     """Three-winding transformer data."""
-    header = "DTR3"
+    header = "THREE_WINDING_TRANSFORMER"
     comment = "(BPr.),(BSe.),(BTe.),(Fic.),'Nc','O',W,(RPS%),(XPS%),(SbPS),(RST%),(XST%),(SbST),(RPT%),(XPT%),(SbPT),(.Fp.),(.Cost.),'(..Date..)','C',(KeyC),'(..PrName..)','(..SeName..)','(..TeName..)','(..Name12..)','(................Name40......-->)"
 
     def __init__(self):
-        super(Dtr3, self).__init__()
+        super(ThreeWindingTransformer, self).__init__()
         self.bpr = 0
         self.bse = 0
         self.bte = 0
@@ -400,12 +391,12 @@ class Dtr3(RecordType):
         self.name40 = ""
 
 
-class Dcsc(RecordType):
-    header = "DCSC"
+class ControlledSeriesCapacitor(RecordType):
+    header = "CSC"
     comment = "(Bfr.),(Bto.),Nc,'O','W',(XMn%),(XMx%),Nt,(.Rn.),(.Re.),(.Fp.),(.Cost.),'(..Date..)','C',(KeyC),'(..Name12..)','CM','M',(VTMN),(VTMX),(LINX),(SET.),S,B,(.MW.)"
 
     def __init__(self):
-        super(Dcsc, self).__init__()
+        super(ControlledSeriesCapacitor, self).__init__()
         self.bfr = 0
         self.bto = 0
         self.nc = 0
@@ -433,13 +424,13 @@ class Dcsc(RecordType):
         self.mw = 0
 
 
-class Dsvc(RecordType):
+class StaticVarCompensator(RecordType):
     """Static var compensator data."""
     header = "DSVC"
     comment = "(Nc),'(...CNam...)','O',(.Bus),'(.Bus Name.)',(.Ktr),'(.Ktr Name.)',(CLin),CM,(Nu),(Qmin),(Qmax),(k$/Uni),'(..Date..)','C',S,(MVAR)"
 
     def __init__(self):
-        super(Dsvc, self).__init__()
+        super(StaticVarCompensator, self).__init__()
         self.nc = 0
         self.cnam = ""
         self.o = ""
