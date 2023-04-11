@@ -67,7 +67,8 @@ class NpFile:
 
         header_elements_pairs = (
             (Bus.header, Bus.comment, self.buses),
-            (Bus.header, Bus.comment, self.middlepoint_buses),
+            (MiddlePointBus.header, MiddlePointBus.comment,
+             self.middlepoint_buses),
             (Area.header, Area.comment, self.areas),
             (Region.header, Region.comment, self.regions),
             (System.header, System.comment, self.systems),
@@ -75,14 +76,16 @@ class NpFile:
             (Generator.header, Generator.comment, self.generators),
             (BusShunt.header, BusShunt.comment, self.bus_shunts),
             (Line.header, Line.comment, self.lines),
-            (Line.header, Line.comment, self.lines),
             (LineShunt.header, LineShunt.comment, self.line_shunts),
             (Transformer.header, Transformer.comment, self.transformers),
-            (Transformer.header, Transformer.comment, self.equivalent_transformers),
-            (ThreeWindingTransformer.header, ThreeWindingTransformer.comment, self.three_winding_transformers),
-            (ThreeWindingTransformer.header, ThreeWindingTransformer.comment, self.three_winding_transformers),
-            (ControlledSeriesCapacitor.header, ControlledSeriesCapacitor.comment, self.cscs),
-            (StaticVarCompensator.header, StaticVarCompensator.comment, self.svcs),
+            (EquivalentTransformer.header, EquivalentTransformer.comment,
+             self.equivalent_transformers),
+            (ThreeWindingTransformer.header, ThreeWindingTransformer.comment,
+             self.three_winding_transformers),
+            (ControlledSeriesCapacitor.header,
+             ControlledSeriesCapacitor.comment, self.cscs),
+            (StaticVarCompensator.header, StaticVarCompensator.comment,
+             self.svcs),
         )
 
         for header, comment, elements in header_elements_pairs:
@@ -120,7 +123,7 @@ class RecordType(object):
 class System(RecordType):
     """System data."""
     header = "SYSTEM"
-    comment = "('S','(........Name......)',S,(Ns)"
+    comment = "[ID],\"[...Name...]\",System#"
 
     def __init__(self):
         super(System, self).__init__()
@@ -131,11 +134,15 @@ class System(RecordType):
         # Unique system number.
         self.number = 0
 
+    def __str__(self):
+        args = [self.id, self.name, self.number, ]
+        return "\"{:2s}\",\"{:12s}\",{:2d}".format(*args)
+
 
 class Region(RecordType):
     """Region data."""
     header = "REGION"
-    comment = "('R','(........Name......)',(Nr),(Ns),'Is'"
+    comment = "[ID],\"[........Name......]\",Region#,System#,\"SystemID\""
 
     def __init__(self):
         super(Region, self).__init__()
@@ -143,316 +150,488 @@ class Region(RecordType):
         self.id = ""
         # 12-characters unique region name.
         self.name = ""
-        #
-        self.nr = 0
-        self.ns = 0
-        self.icode = ""
+        # Region unique number
+        self.number = 0
+        # Number of the system the region is part of.
+        self.system_number = 0
+        # Two-character identifier of the system the region is part of.
+        self.system_id = ""
+
+    def __str__(self):
+        args = [self.id, self.name, self.number, self.system_number,
+                self.system_id]
+        return "\"{:2s}\",\"{:12s}\",{:2d},{:2d},\"{:2s}\"".format(*args)
 
 
 class Area(RecordType):
     """Area data."""
     header = "AREA"
-    comment = "('Ar)','(.............Area Name............)',(Na),(Ns),'Is'"
+    comment = \
+        "[ID],\"[.............Area Name............]\",Area#," \
+        "System#,\"SystemID\""
 
     def __init__(self):
         super(Area, self).__init__()
-        # Two-characters unique area identifier.
+        # 4-characters unique area identifier.
         self.id = ""
-        # 12-characters unique area name.
+        # 36-characters unique area name.
         self.name = ""
         # Unique area number.
         self.number = 0
+        # Number of the system this area is part of.
         self.system_number = 0
-        self.iscode = ""
+        # Two-chars unique identifier of the system this area is part of.
+        self.system_id = ""
+
+    def __str__(self):
+        args = [self.id, self.name, self.number, self.system_number,
+                self.system_id]
+        return "\"{:2s}\",\"{:36s}\",{:4d},{:2d},\"{:2s}\"".format(*args)
 
 
 class Bus(RecordType):
     """Bus data."""
     header = "BUS"
-    comment = "(Bus.),'(...Name...)','O',(.kV.),(Ar),(Rg),(Si),'(..Date..)','C',(.Cost.),TB,CC,(Volt),(Angl),(Vmax),(Vmin),(Emax),(Emin),S,'(.........Name24.......)'"
+    comment = "Bus#,\"[...Name...]\",\"Op\",[.kV.],Area#,Region#,System#," \
+              "\"[..Date..]\",\"Cnd\",Cost,Type,LoadShed,Volt,Angle,Vmax,Vmin," \
+              "EVmax,EVmin,Stt,\"[....Extended Name.....]\""
 
     def __init__(self):
         super(Bus, self).__init__()
         self.bus = 0
         self.name = ""
-        self.o = ""
-        self.kv = 0
-        self.area = 0
-        self.region = 0
-        self.system = 0
+        self.op = ""
+        self.kvbase = 0
+        self.area_number = 0
+        self.region_number = 0
+        self.system_number = 0
         self.date = ""
-        self.c = ""
+        self.cnd = ""
         self.cost = 0
-        self.tb = 0
-        self.cc = 0
+        self.type = 0
+        self.loadshed = 0
         self.volt = 0
-        self.angl = 0
+        self.angle = 0
         self.vmax = 0
         self.vmin = 0
-        self.emax = 0
-        self.emin = 0
-        self.s = 0
-        self.name24 = ""
+        self.evmax = 0
+        self.evmin = 0
+        self.stt = 0
+        self.extended_name = ""
+
+    def __str__(self):
+        args = [self.bus, self.name, self.op, self.kvbase, self.area_number,
+                self.region_number, self.system_number, self.date, self.cnd,
+                self.cost, self.type, self.loadshed, self.volt, self.angle,
+                self.vmax, self.vmin, self.evmax, self.evmin, self.stt,
+                self.extended_name]
+        return "{:6d},\"{:12s}\",\"{:1s}\",{:3.2f},{:2d},{:2d},{:2d}," \
+               "\"{:10s}\",\"{:1s}\",{:8.2f},{:1d},{:1d},{:8.3f},{:8.3f}," \
+               "{:8.3f},{:8.3f},{:8.3f},{:8.3f},{:1d},\"{:12s}\"".format(*args)
+
+
+class MiddlePointBus(Bus):
+    header = "MIDDLEPOINT_BUS"
+    comment = Bus.comment
+
+    def __init__(self):
+        super(MiddlePointBus, self).__init__()
 
 
 class Demand(RecordType):
     """Demand per bus (load) data."""
     header = "DEMAND"
-    comment = "(Ndm),'(...DNam...)','O',(Bus.),'(...Bnam...)',(Nu),'(..Date..)','C',(Nd),(Nc),(PdemP),(QdemP)"
+    comment = "Demand#,\"[...Name...]\",\"Op\",Bus#,\"[.Bus Name.]\"," \
+              "Units,\"[..Date..]\",\"Cnd\",P_MW,Q_MW"
 
     def __init__(self):
         super(Demand, self).__init__()
-        self.ndm = 0
-        self.dnam = ""
-        self.o = 0
-        self.bus = 0
-        self.bnam = ""
-        self.nu = 0
+        self.number = 0
+        self.name = ""
+        self.op = "A"
+        self.bus_number = 0
+        self.bus_name = ""
+        self.units = 0
         self.date = ""
-        self.c = ""
-        self.nd = 0
-        self.nc = 0
-        self.pdemp = 0
-        self.qdemp = 0
+        self.cnd = ""
+        self.p_mw = 0.0
+        self.q_mw = 0.0
+
+    def __str__(self):
+        args = [self.number, self.name, self.op,
+                self.bus_number, self.bus_name, self.units, self.date,
+                self.cnd, self.p_mw, self.q_mw]
+        return "{:7d},\"{:12s}\",\"{:1s}\",{:5d},\"{:12s}\",{:5d},\"{:10s}\"," \
+               "\"{:1s}\",{:8.4f},{:8.4f}".format(*args)
 
 
 class Generator(RecordType):
     """Generator data."""
     header = "GENERATOR"
-    comment = "(Ng),'(..Name12..)','(...GNam...)','O',(Bus.),'(...Name...)','T',Nu,(Pmin),(Pmax),(Qmin),(Qmax),(PrbF),'(..Date..)','C',(Ktr.),'(.Ktr_Name.)',(TC),(Factor),Uc,(Pgen),(Qgen)"
+    comment = "Gen#,\"[...Name...]\",\"Op\",Bus#,\"[.Bus Name.]\",\"Type\"," \
+              "Units,Pmin,Pmax,Qmin,Qmax,\"[..Date..]\",\"C\"," \
+              "CtrBus#,\"[CtrBusName]\",CtrType,Factor,UnitsOn,Pgen,Qgen"
 
     def __init__(self):
         super(Generator, self).__init__()
-        self.ng = 0
-        self.name12 = ""
-        self.gnam = ""
-        self.o = ""
-        self.bus = 0
+        self.number = 0
         self.name = ""
-        self.t = 0
-        self.nu = 0
+        self.op = ""
+        self.bus = 0
+        self.bus_name = ""
+        # Generator type: (H)ydro, (T)hermal, (R)enewable.
+        self.type = ""
+        self.units = 0
         self.pmin = 0
         self.pmax = 0
         self.qmin = 0
         self.qmax = 0
-        self.prbf = 0
-        self.date = 0
-        self.c = ""
-        self.ktr = 0
-        self.ktr_name = ""
-        self.tc = 0
+        self.date = ""
+        self.cnd = ""
+        self.ctr_bus = 0
+        self.ctr_bus_name = ""
+        self.ctr_type = 0
         self.factor = 0
-        self.uc = 0
+        self.units_on = 0
         self.pgen = 0
         self.qgen = 0
+
+    def __str__(self):
+        args = [self.number, self.name, self.op, self.bus, self.bus_name,
+                self.type, self.units, self.pmin, self.pmax,
+                self.qmin, self.qmax, self.date, self.cnd,
+                self.ctr_bus, self.ctr_bus_name, self.ctr_type,
+                self.factor, self.units_on, self.pgen, self.qgen]
+        return "{:6d},\"{:12s}\",\"{:1s}\",{:6d},\"{:12s}\"," \
+               "\"{:1s}\",{:3d},{:8.3f},{:8.3f},{:8.3f},{:8.3f}," \
+               "\"{:10s}\",\"{:1s}\",{:6d},\"{:12s}\",{:1d}," \
+               "{:8.3f},{:3d},{:8.3f},{:8.3f}".format(*args)
 
 
 class Line(RecordType):
     """Line data."""
     header = "LINE"
-    comment = "(Bfr.),(Bto.),Nc,'O','W',(.R%.),(.X%.),(MVAr),(.Rn.),(.Re.),(.Fp.),(.Cost.),'(..Date..)','C',(KeyC),TC,'(..Name12..)',( EF,(..Km..),S,'(................Name40................)'"
+    comment = "FromBus#,ToBus#,ParallelCirc#,Op,MetEnd,R%,X%,MVAr," \
+              "NomRating,EmgRating,PF,Cost,\"[..Date..]\",\"Cnd\",Serie#," \
+              "Type,\"[...Name...]\",Env,LengthKm," \
+              "Stt,\"[....Extended Name.....]\""
 
     def __init__(self):
         super(Line, self).__init__()
-        self.bfr = 0
-        self.bto = 0
-        self.nc = 0
-        self.o = ""
-        self.w = ""
-        self.r = 0
-        self.x = 0
+        self.from_bus_number = 0
+        self.to_bus_number = 0
+        self.parallel_circuit_number = 0
+        self.op = ""
+        # Metering end: (F)rom or (T)o bus.
+        self.metering_end = ""
+        self.r_pct = 0
+        self.x_pct = 0
         self.mvar = 0
-        self.rn = 0
-        self.re = 0
-        self.fp = 0
+        self.nominal_rating = 0
+        self.emergency_rating = 0
+        self.power_factor = 0
         self.cost = 0
         self.date = ""
-        self.c = 0
-        self.keyc = 0
-        self.tc = 0
-        self.name12 = ""
-        self.ef = 0
-        self.km = 0
-        self.s = ""
-        self.name40 = ""
+        self.cnd = ""
+        self.number = 0
+        # circuit type
+        self.type = 0
+        self.name = ""
+        # environment factor (0/1)
+        self.env_factor = 0
+        self.length_km = 0
+        self.stt = 0
+        self.extended_name = ""
+
+    def __str__(self):
+        args = [self.from_bus_number, self.to_bus_number,
+                self.parallel_circuit_number, self.op, self.metering_end,
+                self.r_pct, self.x_pct, self.mvar, self.nominal_rating,
+                self.emergency_rating, self.power_factor, self.cost,
+                self.date, self.cnd, self.number, self.type, self.name,
+                self.env_factor, self.length_km, self.stt, self.extended_name
+                ]
+        return "{:6d},{:6d},{:3d},\"{:1s}\",\"{:1s}\"," \
+               "{:8.3f},{:8.3f},{:8.3f},{:8.3f},{:8.3f}," \
+               "{:8.3f},{:8.3f},\"{:10s}\",\"{:1s}\",{:6d}," \
+               "{:1d},\"{:12s}\",{:1d},{:8.3f},{:1d},\"{:12s}\"".format(*args)
 
 
 class BusShunt(RecordType):
     """Bus shunt data."""
     header = "BUS_SHUNT"
-    comment = "(Ns),'(...Name...)','O',(Bus.),'(.Bus_Name.)',(Ktr.),'(.Ktr_Name.)','T',(CT),(Nu),(MVAr),(K$/Uni),'(..Date..)','C',(Uc)"
+    comment = "Shunt#,\"[...Name...]\",\"Op\",Bus#,\"[.Bus Name.]\"," \
+              "CtrBus#,\"[.Ctr Name.]\",\"T\",CtrType,Units,MVAr,Cost," \
+              "\"[..Date..]\",\"Cnd\",UnitsOn"
 
     def __init__(self):
         super(BusShunt, self).__init__()
-        self.ns = 0
-        self.name = 0
-        self.o = 0
-        self.bus = 0
-        self.bus_name = 0
-        self.ktr = 0
-        self.ktr_name = 0
-        self.t = 0
-        self.ct = 0
-        self.nu = 0
-        self.mvar = 0
-        self.kcost_uni = 0
-        self.date = 0
-        self.c = 0
-        self.uc = 0
+        self.number = 0
+        self.name = ""
+        self.op = ""
+        self.bus_number = 0
+        self.bus_name = ""
+        self.ctr_bus_number = 0
+        self.ctr_bus_name = ""
+        self.type = ""
+        self.ctr_type = 0
+        self.units = 0
+        self.mvar = 0.0
+        self.cost = 0.0
+        self.date = ""
+        self.cnd = ""
+        self.units_on = 0
+
+    def __str__(self):
+        args = [self.number, self.name, self.op,
+                self.bus_number, self.bus_name,
+                self.ctr_bus_number, self.ctr_bus_name,
+                self.type, self.ctr_type, self.units, self.mvar, self.cost,
+                self.date, self.cnd, self.units_on,
+                ]
+        return "{:6d},\"{:12s}\",\"{:1s}\",{:6d},\"{:12s}\"," \
+               "{:6d},\"{:12s}\",\"{:1s}\",{:1d},{:3d},{:8.3f}," \
+               "{:8.3f},\"{:10s}\",\"{:1s}\",{:1d}".format(*args)
 
 
 class LineShunt(RecordType):
     """Line shunt data."""
     header = "LINE_SHUNT"
-    comment = "(Ns),'(...SNam...)','O',(Bfr.),(BTo.),Nc,(MVAr),'B',(K$/Uni),'(..Date..)','C',S,'(...LKey...)'"
+    comment = "Shunt#,\"[...Name...]\",\"Op\"," \
+              "FromBus#,ToBus#,ParallelCirc#,MVAr,Term,Cost," \
+              "\"[..Date..]\",\"Cnd\",Stt,Series#"
 
     def __init__(self):
         super(LineShunt, self).__init__()
-        self.ns = 0
-        self.snam = ""
-        self.o = ""
-        self.bfr = 0
-        self.bto = 0
-        self.nc = 0
+        self.number = 0
+        self.name = ""
+        self.op = ""
+        self.from_bus_number = 0
+        self.to_bus_number = 0
+        self.parallel_number = 0
         self.mvar = 0
-        self.b = ""
-        self.kcost_uni = 0
+        # Connection terminal: (F)rom bus or (T)o bus.
+        self.terminal = ""
+        # Cost per unit in k$.
+        self.cost = 0
         self.date = ""
-        self.c = ""
-        self.s = 0
-        self.lkey = ""
+        self.cnd = ""
+        self.stt = 0
+        self.circuit_number = 0
+
+    def __str__(self):
+        args = [self.number, self.name, self.op,
+                self.from_bus_number, self.to_bus_number,
+                self.parallel_number, self.mvar, self.terminal, self.cost,
+                self.date, self.cnd, self.stt, self.circuit_number]
+        return "{:6d},\"{:12s}\",\"{:1s}\",{:6d},{:6d},{:2d},{:8.3f}," \
+               "\"{:1s}\",{:8.3f},\"{:10s}\",\"{:1s}\"," \
+               "{:1d},{:3d}".format(*args)
 
 
 class Transformer(RecordType):
     """Two-winding transformer data."""
     header = "TRANSFORMER"
-    comment = "(Bfr.),(Bto.),Nc,'O','W',(.R%.),(.X%.),(Tmn),(Tmx),(Phn),(Phx),TC,(BCn.),Nt,(.Rn.),(.Re.),(.Fp.),(.Cost.),'(..Date..)','C',(KeyC),'(...Name...)',( EF,'(................Name40................)',S,(Tap),(Phs),(Fmin),(Fmax),(FEmn),(FEmx)"
+    comment = "FromBus#,ToBus#,ParallelCirc#,\"Op\",\"MetEnd\",R%,X%," \
+              "TapMin,TapMax,PhaseMin,PhaseMax,ControlType,CtrBus,TapSteps," \
+              "NomRating,EmgRating,PF,Cost,\"[..Date..]\",\"Cnd\",Series#," \
+              "\"[...Name...]\",Env,\"[...Extended Name...]\",Stt,Tap,Phase," \
+              "MinFlow,MaxFlow,EmgMinFlow,EmgMaxFlow"
 
     def __init__(self):
         super(Transformer, self).__init__()
-        self.bfr = 0
-        self.bto = 0
-        self.nc = 0
-        self.o = ""
-        self.w = ""
-        self.r = 0
-        self.x = 0
-        self.tmn = 0
-        self.tmx = 0
-        self.phn = 0
-        self.phx = 0
-        self.tc = 0
-        self.bcn = 0
-        self.nt = 0
-        self.rn = 0
-        self.re = 0
-        self.fp = 0
+        self.from_bus_number = 0
+        self.to_bus_number = 0
+        self.parallel_circuit_number = 0
+        self.op = ""
+        self.metering_end = ""
+        self.r_pct = 0
+        self.x_pct = 0
+        self.tap_min = 0
+        self.tap_max = 0
+        self.phase_min = 0
+        self.phase_max = 0
+        self.control_type = 0
+        self.ctr_bus_number = 0
+        self.tap_steps = 0
+        self.nominal_rating = 0
+        self.emergency_rating = 0
+        self.power_factor = 0
         self.cost = 0
         self.date = ""
-        self.c = ""
-        self.keyc = 0
+        self.cnd = ""
+        self.series_number = 0
         self.name = ""
-        self.ef = 0
-        self.name40 = ""
-        self.s = 0
+        self.env = 0
+        self.extended_name = ""
+        self.stt = 0
         self.tap = 0
-        self.phs = 0
-        self.fmin = 0
-        self.fmax = 0
-        self.femn = 0
-        self.femx = 0
+        self.phase = 0
+        self.minflow = 0
+        self.maxflow = 0
+        self.emergency_minflow = 0
+        self.emergency_maxflow = 0
+
+    def __str__(self):
+        args = [self.from_bus_number, self.to_bus_number,
+                self.parallel_circuit_number, self.op, self.metering_end,
+                self.r_pct, self.x_pct, self.tap_min, self.tap_max,
+                self.phase_min, self.phase_max, self.control_type,
+                self.ctr_bus_number, self.tap_steps, self.nominal_rating,
+                self.emergency_rating, self.power_factor, self.cost,
+                self.date, self.cnd, self.series_number, self.name, self.env,
+                self.extended_name, self.stt, self.tap, self.phase,
+                self.minflow, self.maxflow, self.emergency_minflow,
+                self.emergency_maxflow, ]
+        return "{:6d},{:6d},{:3d},\"{:1s}\",\"{:1s}\",{:8.3f},{:8.3f}," \
+               "{:8.3f},{:8.3f},{:8.3f},{:8.3f},{:1d},{:6d},{:3d}," \
+               "{:8.3f},{:8.3f},{:8.3f},{:8.3f},\"{:10s}\",\"{:1s}\"," \
+               "{:6d},\"{:12s}\",{:1d},\"{:12s}\",{:1d}," \
+               "{:8.3f},{:8.3f},{:8.3f},{:8.3f},{:8.3f},{:8.3f}".format(*args)
+
+
+class EquivalentTransformer(RecordType):
+    header = "EQUIVALENT_TRANSFORMER"
+    comment = Transformer.comment
+
+    def __init__(self):
+        super(EquivalentTransformer, self).__init__()
 
 
 class ThreeWindingTransformer(RecordType):
     """Three-winding transformer data."""
     header = "THREE_WINDING_TRANSFORMER"
-    comment = "(BPr.),(BSe.),(BTe.),(Fic.),'Nc','O',W,(RPS%),(XPS%),(SbPS),(RST%),(XST%),(SbST),(RPT%),(XPT%),(SbPT),(.Fp.),(.Cost.),'(..Date..)','C',(KeyC),'(..PrName..)','(..SeName..)','(..TeName..)','(..Name12..)','(................Name40......-->)"
+    comment = "PrimaryBus#,SecondaryBus#,TertiaryBus#,MiddlePointBus#," \
+              "ParallelCirc#,\"Op\",\"MetEnd\",RPS%,XPS%,SbPS," \
+              "RST%,XST%,SbST,RPT%,XPT%,SbPT,PF,Cost,\"[..Date..]\",\"Cnd\"," \
+              "Series#,\"PriEqvTrfName\",\"SecEqvTrfName\"," \
+              "\"TerEqvTrfname\",\"[...Name...]\",\"[...Extended Name...]\""
 
     def __init__(self):
         super(ThreeWindingTransformer, self).__init__()
-        self.bpr = 0
-        self.bse = 0
-        self.bte = 0
-        self.fic = 0
-        self.nc = 0
-        self.o = ""
-        self.w = ""
-        self.rps = 0
-        self.xps = 0
-        self.sbps = 0
-        self.rst = 0
-        self.xst = 0
-        self.sbst = 0
-        self.rpt = 0
-        self.xpt = 0
-        self.sbpt = 0
-        self.fp = 0
+        self.primary_bus_number = 0
+        self.secondary_bus_number = 0
+        self.tertiary_bus_number = 0
+        self.middlepoint_bus_number = 0
+        self.parallel_circuit_number = 0
+        self.op = ""
+        self.metering_end = ""
+        self.rps_pct = 0
+        self.xps_pct = 0
+        self.sbaseps_mva = 0
+        self.rst_pct = 0
+        self.xst_pct = 0
+        self.sbasest_mva = 0
+        self.rpt_pct = 0
+        self.xpt_pct = 0
+        self.sbasept_mva = 0
+        self.power_factor = 0
         self.cost = 0
         self.date = ""
-        self.c = ""
-        self.keyc = 0
-        self.prname = ""
-        self.sename = ""
-        self.tename = ""
-        self.name12 = ""
-        self.name40 = ""
+        self.cnd = ""
+        self.series_number = 0
+        self.pritrf_name = ""
+        self.sectrf_name = ""
+        self.tertrf_name = ""
+        self.name = ""
+        self.extended_name = ""
+
+    def __str__(self):
+        args = [self.primary_bus_number, self.secondary_bus_number,
+                self.tertiary_bus_number, self.middlepoint_bus_number,
+                self.parallel_circuit_number, self.op, self.metering_end,
+                self.rps_pct, self.xps_pct, self.sbaseps_mva,
+                self.rst_pct, self.xps_pct, self.sbaseps_mva,
+                self.rpt_pct, self.xpt_pct, self.sbasept_mva,
+                self.power_factor, self.cost, self.date, self.cnd,
+                self.series_number, self.pritrf_name, self.sectrf_name,
+                self.tertrf_name, self.name, self.extended_name]
+        return "{:6d},{:6d},{:6d},{:6d},{:2d},\"{:1s}\",\"{:1s}\"," \
+               "{:8.3f},{:8.3f},{:8.3f}," \
+               "{:8.3f},{:8.3f},{:8.3f}," \
+               "{:8.3f},{:8.3f},{:8.3f},{:8.3f},{:8.3f}," \
+               "\"{:10s}\",\"{:1s}\",{:6d}," \
+               "\"{:12s}\",\"{:12s}\",\"{:12s}\"," \
+               "\"{:12s}\",\"{:12s}\",".format(*args)
 
 
 class ControlledSeriesCapacitor(RecordType):
     header = "CSC"
-    comment = "(Bfr.),(Bto.),Nc,'O','W',(XMn%),(XMx%),Nt,(.Rn.),(.Re.),(.Fp.),(.Cost.),'(..Date..)','C',(KeyC),'(..Name12..)','CM','M',(VTMN),(VTMX),(LINX),(SET.),S,B,(.MW.)"
+    comment = "FromBus#,ToBus#,ParallelCirc#,\"Op\",\"MetEnd\",Xmin%,Xmax%," \
+              "NomRating,EmgRating,PF,Cost,\"[..Date..]\",\"Cnd\"," \
+              "Series#,\"[...Name...]\",\"CM\",\"M\",Stt,Bypass,Setpoint"
 
     def __init__(self):
         super(ControlledSeriesCapacitor, self).__init__()
-        self.bfr = 0
-        self.bto = 0
-        self.nc = 0
-        self.o = ""
-        self.w = ""
-        self.xmn = 0
-        self.xmx = 0
-        self.nt = 0
-        self.rn = 0
-        self.re = 0
-        self.fp = 0
+        self.from_bus_number = 0
+        self.to_bus_number = 0
+        self.parallel_circuit_number = 0
+        self.op = ""
+        self.metering_end = ""
+        self.xmin_pct = 0
+        self.xmax_pct = 0
+        self.nominal_rating = 0
+        self.emergency_rating = 0
+        self.power_factor = 0
         self.cost = 0
         self.date = ""
-        self.c = ""
-        self.keyc = 0
-        self.name12 = ""
-        self.cm = ""
-        self.m = ""
-        self.vtmn = 0
-        self.vtmx = 0
-        self.linx = 0
-        self.set = 0
-        self.s = 0
-        self.b = 0
-        self.mw = 0
+        self.cnd = ""
+        self.series_number = 0
+        self.name = ""
+        self.control_mode = ""
+        self.stt = 0
+        self.bypass = 0
+        self.setpoint = 0
+
+    def __str__(self):
+        args = [
+            self.from_bus_number, self.to_bus_number,
+            self.parallel_circuit_number, self.op, self.metering_end,
+            self.xmin_pct, self.xmax_pct,
+            self.nominal_rating, self.emergency_rating,
+            self.power_factor, self.cost, self.date, self.cnd,
+            self.series_number, self.name, self.control_mode, self.stt,
+            self.bypass, self.setpoint
+        ]
+        return "{:6d},{:6d},{:3d},\"{:1s}\",\"{:1s}\"," \
+               "{:8.3f},{:8.3f},{:8.3f},{:8.3f},{:8.3f},{:8.3f}," \
+               "\"{:10s}\",\"{:1s}\",{:6d},\"{:12s}\",\"{:1s}\",{:1d}," \
+               "{:1d},{:8.3f}".format(*args)
 
 
 class StaticVarCompensator(RecordType):
     """Static var compensator data."""
-    header = "DSVC"
-    comment = "(Nc),'(...CNam...)','O',(.Bus),'(.Bus Name.)',(.Ktr),'(.Ktr Name.)',(CLin),CM,(Nu),(Qmin),(Qmax),(k$/Uni),'(..Date..)','C',S,(MVAR)"
+    header = "SVC"
+    comment = "SVC#,\"[...Name...]\",\"Op\",Bus#,\"[.Bus Name.]\",CtrBus," \
+              "\"[.Ctr Name.]\",Droop,CtrMode,Units,Qmin,Qmax,Cost," \
+              "\"[..Date..]\",\"Cnd\",Stt,SetMVAR"
 
     def __init__(self):
         super(StaticVarCompensator, self).__init__()
-        self.nc = 0
-        self.cnam = ""
-        self.o = ""
-        self.bus = 0
+        self.number = 0
+        self.name = ""
+        self.op = ""
+        self.bus_number = 0
         self.bus_name = ""
-        self.ktr = 0
-        self.ktr_name = ""
-        self.clin = 0
-        self.cm = 0
-        self.nu = 0
+        self.ctr_bus_number = 0
+        self.ctr_bus_name = ""
+        self.droop = 0.0
+        self.ctr_mode = 0
+        self.units = 0
         self.qmin = 0
         self.qmax = 0
-        self.kcost_uni = 0
+        self.cost = 0
         self.date = ""
-        self.c = 0
-        self.s = 0
-        self.mvar = 0
+        self.cnd = ""
+        self.stt = 0
+        self.mvar_setpoint = 0
+
+    def __str__(self):
+        args = [self.number, self.name, self.op, self.bus_number,
+                self.bus_name, self.ctr_bus_number, self.ctr_bus_name,
+                self.droop, self.ctr_mode, self.units, self.qmin, self.qmax,
+                self.cost, self.date, self.cnd, self.stt, self.mvar_setpoint]
+        return "{:6d},\"{:12s}\",\"{:1s}\",{:6d},\"{:12s}\"," \
+               "{:6d},\"{:12s}\",{:8.3f},{:3d},{:3d},{:8.3f},{:8.3f}," \
+               "{:8.3f},\"{:10s}\",\"{:1s}\",{:1d},{:8.3f}".format(*args)
 
