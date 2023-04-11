@@ -27,11 +27,15 @@ class Starpoint:
 class NpFile:
     """Represents a study stage/block data."""
     def __init__(self):
-        self.revision = 1
-        """Case title."""
-        self.titu = ""
 
+        # File format revision number.
+        self.revision = 1
+
+        # Case title.
+        self.title = ""
         self.buses = []
+        # Buses that represents the fictitious middle point of
+        #  three-winding transformers.
         self.middlepoint_buses = []
         self.areas = []
         self.regions = []
@@ -44,7 +48,9 @@ class NpFile:
         self.transformers = []
         self.equivalent_transformers = []
         self.three_winding_transformers = []
+        # Controlled series capacitors.
         self.cscs = []
+        # Static VAR compensators.
         self.svcs = []
 
     def _append_elements(self, contents, header, comment, elements):
@@ -57,7 +63,7 @@ class NpFile:
 
     def __str__(self):
         contents = ["NPF_REVISION", str(self.revision),
-                    "TITU", self.titu, ]
+                    "TITLE", self.title, ]
 
         header_elements_pairs = (
             (Bus.header, Bus.comment, self.buses),
@@ -118,9 +124,12 @@ class System(RecordType):
 
     def __init__(self):
         super(System, self).__init__()
+        # Two-characters system unique identifier.
         self.id = ""
+        # 12-characters system unique name.
         self.name = ""
-        self.ns = 0
+        # Unique system number.
+        self.number = 0
 
 
 class Region(RecordType):
@@ -130,8 +139,11 @@ class Region(RecordType):
 
     def __init__(self):
         super(Region, self).__init__()
+        # Two-characters unique region identifier.
         self.id = ""
+        # 12-characters unique region name.
         self.name = ""
+        #
         self.nr = 0
         self.ns = 0
         self.icode = ""
@@ -140,24 +152,24 @@ class Region(RecordType):
 class Area(RecordType):
     """Area data."""
     header = "AREA"
-    comment = "('Ar)','(...............Anam...............)',(Na),(Ns),'Is',(Exchg),(ExMin),(ExMax)"
+    comment = "('Ar)','(.............Area Name............)',(Na),(Ns),'Is'"
 
     def __init__(self):
         super(Area, self).__init__()
+        # Two-characters unique area identifier.
         self.id = ""
+        # 12-characters unique area name.
         self.name = ""
-        self.na = 0
-        self.ns = 0
+        # Unique area number.
+        self.number = 0
+        self.system_number = 0
         self.iscode = ""
-        self.exchg = 0.0
-        self.exmin = 0.0
-        self.exmax = 0.0
 
 
 class Bus(RecordType):
     """Bus data."""
     header = "BUS"
-    comment = "(Bus.),'(...Name...)','O',(.kV.),(Ar),(Rg),(Si),'(..Date..)','C',(.Cost.),TB,CC,(Volt),(Angl),(Vmax),(Vmin),(Emax),(Emin),S,(Ow),'(.........Name24.......)'"
+    comment = "(Bus.),'(...Name...)','O',(.kV.),(Ar),(Rg),(Si),'(..Date..)','C',(.Cost.),TB,CC,(Volt),(Angl),(Vmax),(Vmin),(Emax),(Emin),S,'(.........Name24.......)'"
 
     def __init__(self):
         super(Bus, self).__init__()
@@ -165,9 +177,9 @@ class Bus(RecordType):
         self.name = ""
         self.o = ""
         self.kv = 0
-        self.ar = 0
-        self.rg = 0
-        self.si = 0
+        self.area = 0
+        self.region = 0
+        self.system = 0
         self.date = ""
         self.c = ""
         self.cost = 0
@@ -180,14 +192,13 @@ class Bus(RecordType):
         self.emax = 0
         self.emin = 0
         self.s = 0
-        self.ow = 0
         self.name24 = ""
 
 
 class Demand(RecordType):
     """Demand per bus (load) data."""
     header = "DEMAND"
-    comment = "(Ndm),'(...DNam...)','O',(Bus.),'(...Bnam...)',(Nu),'(..Date..)','C',(Nd),(Nc),(PdemP),(QdemP),(PdemI),(QdemI),(PdemZ),(QdemZ)"
+    comment = "(Ndm),'(...DNam...)','O',(Bus.),'(...Bnam...)',(Nu),'(..Date..)','C',(Nd),(Nc),(PdemP),(QdemP)"
 
     def __init__(self):
         super(Demand, self).__init__()
@@ -203,10 +214,6 @@ class Demand(RecordType):
         self.nc = 0
         self.pdemp = 0
         self.qdemp = 0
-        self.pdemi = 0
-        self.qdemi = 0
-        self.pdemz = 0
-        self.qdemz = 0
 
 
 class Generator(RecordType):

@@ -2,7 +2,7 @@ import psr.npf
 
 data = psr.npf.NpFile()
 data.revision = 1
-data.titu = "Case title"
+data.title = "Case title"
 data.buses.append(psr.npf.Bus())
 data.buses.append(psr.npf.Bus())
 data.middlepoint_buses.append(psr.npf.Bus())
