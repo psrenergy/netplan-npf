@@ -48,8 +48,10 @@ class NpFile:
         self.dcsc = []
         self.dsvc = []
 
-    def _append_elements(self, contents, header, elements):
+    def _append_elements(self, contents, header, comment, elements):
+        # type: (list, str, str, list) -> None
         contents.append(header)
+        contents.append(comment)
         for element in elements:
             contents.append(element)
         contents.append("9999999")
@@ -58,47 +60,71 @@ class NpFile:
         contents = ["TITU", self.titu, "DBAR"]
 
         header_elements_pairs = (
-            (Dbar.header, self.dbar),
-            (Dbar.header, self.dbae),
-            (Dare.header, self.dare),
-            (Dreg.header, self.dreg),
-            (Down.header, self.down),
-            (Dsis.header, self.dsis),
-            (Ddem.header, self.ddem),
-            (Dger.header, self.dger),
-            (Dbsh.header, self.dbsh),
-            (Dlin.header, self.dlin),
-            (Dlin.header, self.dlin),
-            (Dshl.header, self.dshl),
-            (Dtrf.header, self.dtrf),
-            (Dtrf.header, self.dt3e),
-            (Dtr3.header, self.dtr3),
-            (Dtr3.header, self.dtr3),
-            (Dcsc.header, self.dcsc),
-            (Dsvc.header, self.dsvc),
+            (Dbar.header, Dbar.comment, self.dbar),
+            (Dbar.header, Dbar.comment, self.dbae),
+            (Dare.header, Dare.comment, self.dare),
+            (Dreg.header, Dreg.comment, self.dreg),
+            (Down.header, Down.comment, self.down),
+            (Dsis.header, Dsis.comment, self.dsis),
+            (Ddem.header, Ddem.comment, self.ddem),
+            (Dger.header, Dger.comment, self.dger),
+            (Dbsh.header, Dbsh.comment, self.dbsh),
+            (Dlin.header, Dlin.comment, self.dlin),
+            (Dlin.header, Dlin.comment, self.dlin),
+            (Dshl.header, Dshl.comment, self.dshl),
+            (Dtrf.header, Dtrf.comment, self.dtrf),
+            (Dtrf.header, Dtrf.comment, self.dt3e),
+            (Dtr3.header, Dtr3.comment, self.dtr3),
+            (Dtr3.header, Dtr3.comment, self.dtr3),
+            (Dcsc.header, Dcsc.comment, self.dcsc),
+            (Dsvc.header, Dsvc.comment, self.dsvc),
         )
 
-        for header, elements in header_elements_pairs:
-            self._append_elements(contents, header, elements)
+        for header, comment, elements in header_elements_pairs:
+            self._append_elements(contents, header, comment, elements)
 
         return "\n".join(contents)
 
 
-class Dsis:
-    """System data."""
-    header = "('S','(........Name......)',S,(Ns)"
+class RecordType:
+    header = ""
+    comment = ""
 
     def __init__(self):
+        pass
+
+    def __str__(self):
+        values = []
+        for var, value in vars(self).items():
+            if var != "header" and var != "comment":
+                # TODO: values that are string already should be escaped with
+                #  quotes.
+                values.append(str(value))
+        return ",".join(values)
+
+    def __repr__(self):
+        return self.__str__()
+
+
+class Dsis(RecordType):
+    """System data."""
+    header = "DSIS"
+    comment = "('S','(........Name......)',S,(Ns)"
+
+    def __init__(self):
+        super(Dsis, self).__init__()
         self.id = ""
         self.name = ""
         self.ns = 0
 
 
-class Down:
+class Down(RecordType):
     """Owner data."""
-    header = "('O','(........Name......)',(No),(Ns),'Is'"
+    header = "DOWN"
+    comment = "('O','(........Name......)',(No),(Ns),'Is'"
 
     def __init__(self):
+        super(Down, self).__init__()
         self.id = ""
         self.name = ""
         self.no = 0
@@ -106,11 +132,13 @@ class Down:
         self.iscode = 0
 
 
-class Dreg:
+class Dreg(RecordType):
     """Region data."""
-    header = "('R','(........Name......)',(Nr),(Ns),'Is'"
+    header = "DREG"
+    comment = "('R','(........Name......)',(Nr),(Ns),'Is'"
 
     def __init__(self):
+        super(Dreg, self).__init__()
         self.id = ""
         self.name = ""
         self.nr = 0
@@ -118,11 +146,13 @@ class Dreg:
         self.icode = ""
 
 
-class Dare:
+class Dare(RecordType):
     """Area data."""
-    header = "('Ar)','(...............Anam...............)',(Na),(Ns),'Is',(Exchg),(ExMin),(ExMax)"
+    header = "DARE"
+    comment = "('Ar)','(...............Anam...............)',(Na),(Ns),'Is',(Exchg),(ExMin),(ExMax)"
 
     def __init__(self):
+        super(Dare, self).__init__()
         self.id = ""
         self.name = ""
         self.na = 0
@@ -133,11 +163,13 @@ class Dare:
         self.exmax = 0.0
 
 
-class Dbar:
+class Dbar(RecordType):
     """Bus data."""
-    header = "(Bus.),'(...Name...)','O',(.kV.),(Ar),(Rg),(Si),'(..Date..)','C',(.Cost.),TB,CC,(Volt),(Angl),(Vmax),(Vmin),(Emax),(Emin),S,(Ow),'(.........Name24.......)'"
+    header = "DBAR"
+    comment = "(Bus.),'(...Name...)','O',(.kV.),(Ar),(Rg),(Si),'(..Date..)','C',(.Cost.),TB,CC,(Volt),(Angl),(Vmax),(Vmin),(Emax),(Emin),S,(Ow),'(.........Name24.......)'"
 
     def __init__(self):
+        super(Dare, self).__init__()
         self.bus = 0
         self.name = ""
         self.o = ""
@@ -161,11 +193,13 @@ class Dbar:
         self.name24 = ""
 
 
-class Ddem:
+class Ddem(RecordType):
     """Demand per bus (load) data."""
-    header = "(Ndm),'(...DNam...)','O',(Bus.),'(...Bnam...)',(Nu),'(..Date..)','C',(Nd),(Nc),(PdemP),(QdemP),(PdemI),(QdemI),(PdemZ),(QdemZ)"
+    header = "DDEM"
+    comment = "(Ndm),'(...DNam...)','O',(Bus.),'(...Bnam...)',(Nu),'(..Date..)','C',(Nd),(Nc),(PdemP),(QdemP),(PdemI),(QdemI),(PdemZ),(QdemZ)"
 
     def __init__(self):
+        super(Ddem, self).__init__()
         self.ndm = 0
         self.dnam = ""
         self.o = 0
@@ -184,11 +218,13 @@ class Ddem:
         self.qdemz = 0
 
 
-class Dger:
+class Dger(RecordType):
     """Generator data."""
-    header = "(Ng),'(..Name12..)','(...GNam...)','O',(Bus.),'(...Name...)','T',Nu,(Pmin),(Pmax),(Qmin),(Qmax),(PrbF),'(..Date..)','C',(Ktr.),'(.Ktr_Name.)',(TC),(Factor),Uc,(Pgen),(Qgen)"
+    header = "DGER"
+    comment = "(Ng),'(..Name12..)','(...GNam...)','O',(Bus.),'(...Name...)','T',Nu,(Pmin),(Pmax),(Qmin),(Qmax),(PrbF),'(..Date..)','C',(Ktr.),'(.Ktr_Name.)',(TC),(Factor),Uc,(Pgen),(Qgen)"
 
     def __init__(self):
+        super(Dger, self).__init__()
         self.ng = 0
         self.name12 = ""
         self.gnam = ""
@@ -213,11 +249,13 @@ class Dger:
         self.qgen = 0
 
 
-class Dlin:
+class Dlin(RecordType):
     """Line data."""
-    header = "(Bfr.),(Bto.),Nc,'O','W',(.R%.),(.X%.),(MVAr),(.Rn.),(.Re.),(.Fp.),(.Cost.),'(..Date..)','C',(KeyC),TC,'(..Name12..)',( EF,(..Km..),S,'(................Name40................)'"
+    header = "DLIN"
+    comment = "(Bfr.),(Bto.),Nc,'O','W',(.R%.),(.X%.),(MVAr),(.Rn.),(.Re.),(.Fp.),(.Cost.),'(..Date..)','C',(KeyC),TC,'(..Name12..)',( EF,(..Km..),S,'(................Name40................)'"
 
     def __init__(self):
+        super(Dlin, self).__init__()
         self.bfr = 0
         self.bto = 0
         self.nc = 0
@@ -241,11 +279,13 @@ class Dlin:
         self.name40 = ""
 
 
-class Dbsh:
+class Dbsh(RecordType):
     """Bus shunt data."""
-    header = "(Ns),'(...Name...)','O',(Bus.),'(.Bus_Name.)',(Ktr.),'(.Ktr_Name.)','T',(CT),(Nu),(MVAr),(K$/Uni),'(..Date..)','C',(Uc)"
+    header = "DBSH"
+    comment = "(Ns),'(...Name...)','O',(Bus.),'(.Bus_Name.)',(Ktr.),'(.Ktr_Name.)','T',(CT),(Nu),(MVAr),(K$/Uni),'(..Date..)','C',(Uc)"
 
     def __init__(self):
+        super(Dbsh, self).__init__()
         self.ns = 0
         self.name = 0
         self.o = 0
@@ -263,11 +303,13 @@ class Dbsh:
         self.uc = 0
 
 
-class Dshl:
+class Dshl(RecordType):
     """Line shunt data."""
-    header = "(Ns),'(...SNam...)','O',(Bfr.),(BTo.),Nc,(MVAr),'B',(K$/Uni),'(..Date..)','C',S,'(...LKey...)'"
+    header = "DSHL"
+    comment = "(Ns),'(...SNam...)','O',(Bfr.),(BTo.),Nc,(MVAr),'B',(K$/Uni),'(..Date..)','C',S,'(...LKey...)'"
 
     def __init__(self):
+        super(Dshl, self).__init__()
         self.ns = 0
         self.snam = ""
         self.o = ""
@@ -283,11 +325,13 @@ class Dshl:
         self.lkey = ""
 
 
-class Dtrf:
+class Dtrf(RecordType):
     """Two-winding transformer data."""
-    header = "(Bfr.),(Bto.),Nc,'O','W',(.R%.),(.X%.),(Tmn),(Tmx),(Phn),(Phx),TC,(BCn.),Nt,(.Rn.),(.Re.),(.Fp.),(.Cost.),'(..Date..)','C',(KeyC),'(...Name...)',( EF,'(................Name40................)',S,(Tap),(Phs),(Fmin),(Fmax),(FEmn),(FEmx)"
+    header = "DTRF"
+    comment = "(Bfr.),(Bto.),Nc,'O','W',(.R%.),(.X%.),(Tmn),(Tmx),(Phn),(Phx),TC,(BCn.),Nt,(.Rn.),(.Re.),(.Fp.),(.Cost.),'(..Date..)','C',(KeyC),'(...Name...)',( EF,'(................Name40................)',S,(Tap),(Phs),(Fmin),(Fmax),(FEmn),(FEmx)"
 
     def __init__(self):
+        super(Dtrf, self).__init__()
         self.bfr = 0
         self.bto = 0
         self.nc = 0
@@ -321,11 +365,13 @@ class Dtrf:
         self.femx = 0
 
 
-class Dtr3:
+class Dtr3(RecordType):
     """Three-winding transformer data."""
-    header = "(BPr.),(BSe.),(BTe.),(Fic.),'Nc','O',W,(RPS%),(XPS%),(SbPS),(RST%),(XST%),(SbST),(RPT%),(XPT%),(SbPT),(.Fp.),(.Cost.),'(..Date..)','C',(KeyC),'(..PrName..)','(..SeName..)','(..TeName..)','(..Name12..)','(................Name40......-->)"
+    header = "DTR3"
+    comment = "(BPr.),(BSe.),(BTe.),(Fic.),'Nc','O',W,(RPS%),(XPS%),(SbPS),(RST%),(XST%),(SbST),(RPT%),(XPT%),(SbPT),(.Fp.),(.Cost.),'(..Date..)','C',(KeyC),'(..PrName..)','(..SeName..)','(..TeName..)','(..Name12..)','(................Name40......-->)"
 
     def __init__(self):
+        super(Dtr3, self).__init__()
         self.bpr = 0
         self.bse = 0
         self.bte = 0
@@ -354,10 +400,12 @@ class Dtr3:
         self.name40 = ""
 
 
-class Dcsc:
-    header = "(Bfr.),(Bto.),Nc,'O','W',(XMn%),(XMx%),Nt,(.Rn.),(.Re.),(.Fp.),(.Cost.),'(..Date..)','C',(KeyC),'(..Name12..)','CM','M',(VTMN),(VTMX),(LINX),(SET.),S,B,(.MW.)"
+class Dcsc(RecordType):
+    header = "DCSC"
+    comment = "(Bfr.),(Bto.),Nc,'O','W',(XMn%),(XMx%),Nt,(.Rn.),(.Re.),(.Fp.),(.Cost.),'(..Date..)','C',(KeyC),'(..Name12..)','CM','M',(VTMN),(VTMX),(LINX),(SET.),S,B,(.MW.)"
 
     def __init__(self):
+        super(Dcsc, self).__init__()
         self.bfr = 0
         self.bto = 0
         self.nc = 0
@@ -385,11 +433,13 @@ class Dcsc:
         self.mw = 0
 
 
-class Dsvc:
+class Dsvc(RecordType):
     """Static var compensator data."""
-    header = "(Nc),'(...CNam...)','O',(.Bus),'(.Bus Name.)',(.Ktr),'(.Ktr Name.)',(CLin),CM,(Nu),(Qmin),(Qmax),(k$/Uni),'(..Date..)','C',S,(MVAR)"
+    header = "DSVC"
+    comment = "(Nc),'(...CNam...)','O',(.Bus),'(.Bus Name.)',(.Ktr),'(.Ktr Name.)',(CLin),CM,(Nu),(Qmin),(Qmax),(k$/Uni),'(..Date..)','C',S,(MVAR)"
 
     def __init__(self):
+        super(Dsvc, self).__init__()
         self.nc = 0
         self.cnam = ""
         self.o = ""
