@@ -64,7 +64,7 @@ class NpFile:
         contents.append(comment)
         for element in elements:
             contents.append(str(element))
-        contents.append("END")
+        contents.append("END\n")
 
     def __str__(self):
         contents = ["NPF_REVISION", str(self.revision),
@@ -135,7 +135,7 @@ class RecordType(object):
 class System(RecordType):
     """System data."""
     header = "SYSTEM"
-    comment = "[ID],\"[.......Name.......]\",System#"
+    comment = "\"ID\",\"[.......Name.......]\",System#"
 
     def __init__(self):
         super(System, self).__init__()
@@ -154,7 +154,7 @@ class System(RecordType):
 class Region(RecordType):
     """Region data."""
     header = "REGION"
-    comment = "[ID],\"[........Name......]\",Region#,System#,\"SystemID\""
+    comment = "\"[ID]\",\"[........Name......]\",Region#,System#,\"SystemID\""
 
     def __init__(self):
         super(Region, self).__init__()
@@ -179,7 +179,7 @@ class Area(RecordType):
     """Area data."""
     header = "AREA"
     comment = \
-        "[ID],\"[.............Area Name............]\",Area#," \
+        "\"[ID]\",\"[.............Area Name............]\",Area#," \
         "System#,\"SystemID\""
 
     def __init__(self):
