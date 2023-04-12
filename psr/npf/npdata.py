@@ -31,8 +31,8 @@ class NpFile:
         # File format revision number.
         self.revision = 1
 
-        # Case title.
-        self.title = ""
+        # Case title/description.
+        self.description = ""
         self.buses = []
         # Buses that represents the fictitious middle point of
         #  three-winding transformers.
@@ -68,7 +68,7 @@ class NpFile:
 
     def __str__(self):
         contents = ["NPF_REVISION", str(self.revision),
-                    "TITLE", self.title, ]
+                    "DESCRIPTION", self.title, ]
 
         header_elements_pairs = (
             (Bus.header, Bus.comment, self.buses),
@@ -135,7 +135,7 @@ class RecordType(object):
 class System(RecordType):
     """System data."""
     header = "SYSTEM"
-    comment = "\"ID\",\"[.......Name.......]\",System#"
+    comment = "# \"ID\",\"[.......Name.......]\",System#"
 
     def __init__(self):
         super(System, self).__init__()
@@ -154,7 +154,7 @@ class System(RecordType):
 class Region(RecordType):
     """Region data."""
     header = "REGION"
-    comment = "\"[ID]\",\"[........Name......]\",Region#,System#,\"SystemID\""
+    comment = "# \"[ID]\",\"[........Name......]\",Region#,System#,\"SystemID\""
 
     def __init__(self):
         super(Region, self).__init__()
@@ -179,7 +179,7 @@ class Area(RecordType):
     """Area data."""
     header = "AREA"
     comment = \
-        "\"[ID]\",\"[.............Area Name............]\",Area#," \
+        "# \"[ID]\",\"[.............Area Name............]\",Area#," \
         "System#,\"SystemID\""
 
     def __init__(self):
@@ -204,7 +204,7 @@ class Area(RecordType):
 class Bus(RecordType):
     """Bus data."""
     header = "BUS"
-    comment = "Bus#,\"[...Name...]\",\"Op\",[.kV.],Area#,Region#,System#," \
+    comment = "# Bus#,\"[...Name...]\",\"Op\",[.kV.],Area#,Region#,System#," \
               "\"[..Date..]\",\"Cnd\",Cost,Type,LoadShed,Volt,Angle,Vmax," \
               "Vmin,EVmax,EVmin,Stt,\"[....Extended Name.....]\""
 
@@ -253,7 +253,7 @@ class MiddlePointBus(Bus):
 class Demand(RecordType):
     """Demand per bus (load) data."""
     header = "DEMAND"
-    comment = "Demand#,\"[...Name...]\",\"Op\",Bus#,\"[.Bus Name.]\"," \
+    comment = "# Demand#,\"[...Name...]\",\"Op\",Bus#,\"[.Bus Name.]\"," \
               "Units,\"[..Date..]\",\"Cnd\",P_MW,Q_MW"
 
     def __init__(self):
@@ -280,7 +280,7 @@ class Demand(RecordType):
 class Generator(RecordType):
     """Generator data."""
     header = "GENERATOR"
-    comment = "Gen#,\"[...Name...]\",\"Op\",Bus#,\"[.Bus Name.]\",\"Type\"," \
+    comment = "# Gen#,\"[...Name...]\",\"Op\",Bus#,\"[.Bus Name.]\",\"Type\"," \
               "Units,Pmin,Pmax,Qmin,Qmax,\"[..Date..]\",\"C\"," \
               "CtrBus#,\"[CtrBusName]\",CtrType,Factor,UnitsOn,Pgen,Qgen"
 
@@ -323,7 +323,7 @@ class Generator(RecordType):
 class Line(RecordType):
     """Line data."""
     header = "LINE"
-    comment = "FromBus#,ToBus#,ParallelCirc#,Op,MetEnd,R%,X%,MVAr," \
+    comment = "# FromBus#,ToBus#,ParallelCirc#,Op,MetEnd,R%,X%,MVAr," \
               "NomRating,EmgRating,PF,Cost,\"[..Date..]\",\"Cnd\",Serie#," \
               "Type,\"[...Name...]\",Env,LengthKm," \
               "Stt,\"[....Extended Name.....]\""
@@ -372,7 +372,7 @@ class Line(RecordType):
 class BusShunt(RecordType):
     """Bus shunt data."""
     header = "BUS_SHUNT"
-    comment = "Shunt#,\"[...Name...]\",\"Op\",Bus#,\"[.Bus Name.]\"," \
+    comment = "# Shunt#,\"[...Name...]\",\"Op\",Bus#,\"[.Bus Name.]\"," \
               "CtrBus#,\"[.Ctr Name.]\",\"T\",CtrType,Units,MVAr,Cost," \
               "\"[..Date..]\",\"Cnd\",UnitsOn"
 
@@ -409,7 +409,7 @@ class BusShunt(RecordType):
 class LineShunt(RecordType):
     """Line shunt data."""
     header = "LINE_SHUNT"
-    comment = "Shunt#,\"[...Name...]\",\"Op\"," \
+    comment = "# Shunt#,\"[...Name...]\",\"Op\"," \
               "FromBus#,ToBus#,ParallelCirc#,MVAr,Term,Cost," \
               "\"[..Date..]\",\"Cnd\",Stt,Series#"
 
@@ -444,7 +444,7 @@ class LineShunt(RecordType):
 class Transformer(RecordType):
     """Two-winding transformer data."""
     header = "TRANSFORMER"
-    comment = "FromBus#,ToBus#,ParallelCirc#,\"Op\",\"MetEnd\",R%,X%," \
+    comment = "# FromBus#,ToBus#,ParallelCirc#,\"Op\",\"MetEnd\",R%,X%," \
               "TapMin,TapMax,PhaseMin,PhaseMax,ControlType,CtrBus,TapSteps," \
               "NomRating,EmgRating,PF,Cost,\"[..Date..]\",\"Cnd\",Series#," \
               "\"[...Name...]\",Env,\"[...Extended Name...]\",Stt,Tap,Phase," \
@@ -513,7 +513,7 @@ class EquivalentTransformer(Transformer):
 class ThreeWindingTransformer(RecordType):
     """Three-winding transformer data."""
     header = "THREE_WINDING_TRANSFORMER"
-    comment = "PrimaryBus#,SecondaryBus#,TertiaryBus#,MiddlePointBus#," \
+    comment = "# PrimaryBus#,SecondaryBus#,TertiaryBus#,MiddlePointBus#," \
               "ParallelCirc#,\"Op\",\"MetEnd\",RPS%,XPS%,SbPS," \
               "RST%,XST%,SbST,RPT%,XPT%,SbPT,PF,Cost,\"[..Date..]\",\"Cnd\"," \
               "Series#,\"PriEqvTrfName\",\"SecEqvTrfName\"," \
@@ -569,7 +569,7 @@ class ThreeWindingTransformer(RecordType):
 
 class ControlledSeriesCapacitor(RecordType):
     header = "CSC"
-    comment = "FromBus#,ToBus#,ParallelCirc#,\"Op\",\"MetEnd\",Xmin%,Xmax%," \
+    comment = "# FromBus#,ToBus#,ParallelCirc#,\"Op\",\"MetEnd\",Xmin%,Xmax%," \
               "NomRating,EmgRating,PF,Cost,\"[..Date..]\",\"Cnd\"," \
               "Series#,\"[...Name...]\",\"CM\",\"M\",Stt,Bypass,Setpoint"
 
@@ -614,7 +614,7 @@ class ControlledSeriesCapacitor(RecordType):
 class StaticVarCompensator(RecordType):
     """Static var compensator data."""
     header = "SVC"
-    comment = "SVC#,\"[...Name...]\",\"Op\",Bus#,\"[.Bus Name.]\",CtrBus," \
+    comment = "# SVC#,\"[...Name...]\",\"Op\",Bus#,\"[.Bus Name.]\",CtrBus," \
               "\"[.Ctr Name.]\",Droop,CtrMode,Units,Qmin,Qmax,Cost," \
               "\"[..Date..]\",\"Cnd\",Stt,SetMVAR"
 
@@ -650,7 +650,7 @@ class StaticVarCompensator(RecordType):
 
 class DcLink(RecordType):
     header = "DC_LINK"
-    comment = "Link#,\"[...Name...]\",kVbase,MWbase,\"Type\""
+    comment = "# Link#,\"[...Name...]\",kVbase,MWbase,\"Type\""
 
     def __init__(self):
         super(DcLink, self).__init__()
@@ -668,7 +668,7 @@ class DcLink(RecordType):
 
 class DcBus(RecordType):
     header = "DC_BUS"
-    comment = "Bus#,\"[...Name...]\",\"Op\",Type,Polarity,GroundR," \
+    comment = "# Bus#,\"[...Name...]\",\"Op\",Type,Polarity,GroundR," \
               "Area#,Region#,System#,DcLink#," \
               "\"[..Date..]\",\"Cnd\",Cost,Volt"
 
@@ -701,7 +701,7 @@ class DcBus(RecordType):
 
 class DcLine(RecordType):
     header = "DC_LINE"
-    comment = "FromBus#,ToBus#,ParallelCirc#,\"Op\",\"MetEnd\",R_Ohm,L_Ohm," \
+    comment = "# FromBus#,ToBus#,ParallelCirc#,\"Op\",\"MetEnd\",R_Ohm,L_Ohm," \
               "NominalRating,Cost,Date,Cnd,Series#," \
               "\"[.........Name.........]\",Stt"
 
@@ -733,7 +733,7 @@ class DcLine(RecordType):
 
 class AcDcConverterLcc(RecordType):
     header = "ACDC_CONVERTER_LCC"
-    comment = "Cnv#,\"Op\",\"MetEnd\",AcBus#,DcBus#,NeutralBus#,\"Type\"," \
+    comment = "# Cnv#,\"Op\",\"MetEnd\",AcBus#,DcBus#,NeutralBus#,\"Type\"," \
               "Inom,Bridges,Xc,Vfs,Snom,Tmin,Tmax,Steps,Mode," \
               "FlowAcDc,FlowDcAc," \
               "FirR,FirRmin,FirRmax,FirI,FirImin,FirImax,CCCC,Cost," \
@@ -799,7 +799,7 @@ class AcDcConverterLcc(RecordType):
 
 class AcDcConverterVsc(RecordType):
     header = "ACDC_CONVERTER_VSC"
-    comment = "Cnv#,\"Op\",\"MetEnd\",AcBus#,DcBus#,NeutralBus#,\"CnvMode\"," \
+    comment = "# Cnv#,\"Op\",\"MetEnd\",AcBus#,DcBus#,NeutralBus#,\"CnvMode\"," \
               "\"VoltMode\",Aloss,Bloss,Minloss,FlowAcDc,FlowDcAc,Imax,Pwf," \
               "Qmin,Qmax,CtrBus#,\"[.Ctr Name.]\",Rmpct,Cost,Date,\"Cnd\"," \
               "\"[...Name...]\",Stt,Setpoint"
