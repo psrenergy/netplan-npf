@@ -52,6 +52,11 @@ class NpFile:
         self.cscs = []
         # Static VAR compensators.
         self.svcs = []
+        self.dclinks = []
+        self.dcbuses = []
+        self.dclines = []
+        self.lcc_converters = []
+        self.vsc_converters = []
 
     def _append_elements(self, contents, header, comment, elements):
         # type: (list, str, str, list) -> None
@@ -86,6 +91,13 @@ class NpFile:
              ControlledSeriesCapacitor.comment, self.cscs),
             (StaticVarCompensator.header, StaticVarCompensator.comment,
              self.svcs),
+            (DcLink.header, DcLink.comment, self.dclinks),
+            (DcBus.header, DcBus.comment, self.dcbuses),
+            (DcLine.header, DcLine.comment, self.dclines),
+            (AcDcConverterLcc.header, AcDcConverterLcc.comment,
+             self.lcc_converters),
+            (AcDcConverterVsc.header, AcDcConverterVsc.comment,
+             self.vsc_converters),
         )
 
         for header, comment, elements in header_elements_pairs:
@@ -123,7 +135,7 @@ class RecordType(object):
 class System(RecordType):
     """System data."""
     header = "SYSTEM"
-    comment = "[ID],\"[...Name...]\",System#"
+    comment = "[ID],\"[.......Name.......]\",System#"
 
     def __init__(self):
         super(System, self).__init__()
@@ -136,7 +148,7 @@ class System(RecordType):
 
     def __str__(self):
         args = [self.id, self.name, self.number, ]
-        return "\"{:2s}\",\"{:12s}\",{:2d}".format(*args)
+        return "\"{:2s}\",\"{:20s}\",{:2d}".format(*args)
 
 
 class Region(RecordType):
@@ -193,8 +205,8 @@ class Bus(RecordType):
     """Bus data."""
     header = "BUS"
     comment = "Bus#,\"[...Name...]\",\"Op\",[.kV.],Area#,Region#,System#," \
-              "\"[..Date..]\",\"Cnd\",Cost,Type,LoadShed,Volt,Angle,Vmax,Vmin," \
-              "EVmax,EVmin,Stt,\"[....Extended Name.....]\""
+              "\"[..Date..]\",\"Cnd\",Cost,Type,LoadShed,Volt,Angle,Vmax," \
+              "Vmin,EVmax,EVmin,Stt,\"[....Extended Name.....]\""
 
     def __init__(self):
         super(Bus, self).__init__()
@@ -261,8 +273,8 @@ class Demand(RecordType):
         args = [self.number, self.name, self.op,
                 self.bus_number, self.bus_name, self.units, self.date,
                 self.cnd, self.p_mw, self.q_mw]
-        return "{:7d},\"{:12s}\",\"{:1s}\",{:5d},\"{:12s}\",{:5d},\"{:10s}\"," \
-               "\"{:1s}\",{:8.4f},{:8.4f}".format(*args)
+        return "{:7d},\"{:12s}\",\"{:1s}\",{:5d},\"{:12s}\",{:5d}," \
+               "\"{:10s}\",\"{:1s}\",{:8.4f},{:8.4f}".format(*args)
 
 
 class Generator(RecordType):
@@ -490,7 +502,7 @@ class Transformer(RecordType):
                "{:8.3f},{:8.3f},{:8.3f},{:8.3f},{:8.3f},{:8.3f}".format(*args)
 
 
-class EquivalentTransformer(RecordType):
+class EquivalentTransformer(Transformer):
     header = "EQUIVALENT_TRANSFORMER"
     comment = Transformer.comment
 
@@ -635,3 +647,211 @@ class StaticVarCompensator(RecordType):
                "{:6d},\"{:12s}\",{:8.3f},{:3d},{:3d},{:8.3f},{:8.3f}," \
                "{:8.3f},\"{:10s}\",\"{:1s}\",{:1d},{:8.3f}".format(*args)
 
+
+class DcLink(RecordType):
+    header = "DC_LINK"
+    comment = "Link#,\"[...Name...]\",kVbase,MWbase,\"Type\""
+
+    def __init__(self):
+        super(DcLink, self).__init__()
+        self.number = 0
+        self.name = ""
+        self.kvbase = 0.0
+        self.mwbase = 0.0
+        self.type = ""
+
+    def __str__(self):
+        args = [self.number, self.name,
+                self.kvbase, self.mwbase, self.type]
+        return "{:4d},\"{:12s}\",{:8.3f},{:8.3f},\"{:3s}\"".format(*args)
+
+
+class DcBus(RecordType):
+    header = "DC_BUS"
+    comment = "Bus#,\"[...Name...]\",\"Op\",Type,Polarity,GroundR," \
+              "Area#,Region#,System#,DcLink#," \
+              "\"[..Date..]\",\"Cnd\",Cost,Volt"
+
+    def __init__(self):
+        super(DcBus, self).__init__()
+        self.number = 0
+        self.name = ""
+        self.op = ""
+        self.type = 0
+        self.polarity = ""
+        self.groundr = 0.0
+        self.area_number = 0
+        self.region_number = 0
+        self.system_number = 0
+        self.dclink_number = 0
+        self.date = ""
+        self.cnd = ""
+        self.cost = 0.0
+        self.volt = 0.0
+
+    def __str__(self):
+        args = [self.number, self.name, self.op,
+                self.type, self.polarity, self.groundr,
+                self.area_number, self.region_number, self.system_number,
+                self.dclink_number, self.date, self.cnd, self.cost, self.volt]
+        return "{:6d},\"{:12s}\",\"{:1s}\",{:1d},\"{:1s}\"," \
+               "{:8.3f},{:4d},{:4d},{:4d},{:4d},\"{:10s}\"," \
+               "\"{:1s}\",{:8.3f},{:8.3f}".format(*args)
+
+
+class DcLine(RecordType):
+    header = "DC_LINE"
+    comment = "FromBus#,ToBus#,ParallelCirc#,\"Op\",\"MetEnd\",R_Ohm,L_Ohm," \
+              "NominalRating,Cost,Date,Cnd,Series#," \
+              "\"[.........Name.........]\",Stt"
+
+    def __init__(self):
+        super(DcLine, self).__init__()
+        self.from_bus_number = 0
+        self.to_bus_number = 0
+        self.parallel_circuit_number = 0
+        self.op = ""
+        self.metering_end = ""
+        self.r_ohm = 0.0
+        self.l_ohm = 0.0
+        self.nominal_rating = 0.0
+        self.date = ""
+        self.cnd = ""
+        self.series_number = 0
+        self.name = ""
+        self.stt = 0
+
+    def __str__(self):
+        args = [self.from_bus_number, self.to_bus_number,
+                self.parallel_circuit_number, self.op, self.metering_end,
+                self.r_ohm, self.l_ohm, self.nominal_rating, self.date,
+                self.cnd, self.series_number, self.name, self.stt]
+        return "{:6d},{:6d},{:3d},\"{:1s}\",\"{:1s}\"," \
+               "{:8.3f},{:8.3f},{:8.3f},\"{:10s}\"," \
+               "\"{:1s}\",{:6d},\"{:24s}\",{:1d}".format(*args)
+
+
+class AcDcConverterLcc(RecordType):
+    header = "ACDC_CONVERTER_LCC"
+    comment = "Cnv#,\"Op\",\"MetEnd\",AcBus#,DcBus#,NeutralBus#,\"Type\"," \
+              "Inom,Bridges,Xc,Vfs,Snom,Tmin,Tmax,Steps,Mode," \
+              "FlowAcDc,FlowDcAc," \
+              "FirR,FirRmin,FirRmax,FirI,FirImin,FirImax,CCCC,Cost," \
+              "\"[..Date..]\",\"Cnd\",\"[...Name...]\",Hz,Stt,Tap,Setpoint"
+
+    def __init__(self):
+        super(AcDcConverterLcc, self).__init__()
+        self.number = 0
+        self.op = ""
+        self.metering_end = ""
+        self.ac_bus = 0
+        self.dc_bus = 0
+        self.neutral_bus = 0
+        # Type: (R)etifier or (I)nverter
+        self.type = ""
+        self.nominal_current = 0.0
+        self.bridges = 0
+        self.xc = 0.0
+        self.vfs = 0.0
+        self.nominal_power = 0.0
+        self.tap_min = 0
+        self.tap_max = 0
+        self.tap_steps = 0
+        self.control_mode = ""
+        self.flow_ac_dc = 0.0
+        self.flow_dc_ac = 0.0
+        self.firing_angle_retifier_set = 0.0
+        self.firing_angle_retifier_min = 0.0
+        self.firing_angle_retifier_max = 0.0
+        self.firing_angle_inverter_set = 0.0
+        self.firing_angle_inverter_min = 0.0
+        self.firing_angle_inverter_max = 0.0
+        self.ccc_capacitance = 0.0
+        self.cost = 0.0
+        self.date = ""
+        self.cnd = ""
+        self.name = ""
+        self.hzbase = 0
+        self.stt = 0
+        self.tap = 0.0
+        self.setpoint = 0.0
+
+    def __str__(self):
+        args = [self.number, self.op, self.metering_end,
+                self.ac_bus, self.dc_bus, self.neutral_bus,
+                self.type, self.nominal_current, self.bridges, self.xc,
+                self.vfs, self.nominal_power,
+                self.tap_min, self.tap_max, self.tap_steps,
+                self.control_mode, self.flow_ac_dc, self.flow_dc_ac,
+                self.firing_angle_retifier_set, self.firing_angle_retifier_min,
+                self.firing_angle_retifier_max, self.firing_angle_inverter_set,
+                self.firing_angle_inverter_min, self.firing_angle_inverter_max,
+                self.ccc_capacitance, self.cost, self.date, self.cnd,
+                self.name, self.hzbase, self.stt, self.tap, self.setpoint, ]
+        return "{:6d},\"{:1s}\",\"{:1s}\",{:6d},{:6d},{:6d}," \
+               "\"{:1s}\",{:8.3f},{:2d},{:8.3f},{:8.3f}," \
+               "{:8.3f},{:8.3f},{:8.3f},{:8.3f},\"{:1s}\"," \
+               "{:8.3f},{:8.3f},{:8.3f},{:8.3f},{:8.3f}," \
+               "{:8.3f},{:8.3f},{:8.3f},{:8.3f},{:8.3f}," \
+               "\"{:10s}\",\"{:1s}\",\"{:12s}\"," \
+               "{:3d},{:8.3f},{:8.3f}".format(*args)
+
+
+class AcDcConverterVsc(RecordType):
+    header = "ACDC_CONVERTER_VSC"
+    comment = "Cnv#,\"Op\",\"MetEnd\",AcBus#,DcBus#,NeutralBus#,\"CnvMode\"," \
+              "\"VoltMode\",Aloss,Bloss,Minloss,FlowAcDc,FlowDcAc,Imax,Pwf," \
+              "Qmin,Qmax,CtrBus#,\"[.Ctr Name.]\",Rmpct,Cost,Date,\"Cnd\"," \
+              "\"[...Name...]\",Stt,Setpoint"
+
+    def __init__(self):
+        super(AcDcConverterVsc, self).__init__()
+        self.number = 0
+        self.op = ""
+        self.metering_end = ""
+        self.ac_bus = 0
+        self.dc_bus = 0
+        self.neutral_bus = 0
+        self.type = ""
+        self.nominal_current = 0.0
+        self.converter_ctr_mode = ""
+        self.voltage_ctr_mode = ""
+        self.aloss = 0.0
+        self.bloss = 0.0
+        self.minloss = 0.0
+        self.flow_ac_dc = 0.0
+        self.flow_dc_ac = 0.0
+        self.max_current = 0.0
+        self.power_factor = 0.0
+        self.qmin = 0.0
+        self.qmax = 0.0
+        self.ctr_bus_number = 0
+        self.ctr_bus_name = ""
+        self.rmpct = 0.0
+        self.cost = 0.0
+        self.date = ""
+        self.cnd = ""
+        self.name = ""
+        self.stt = 0
+        self.setpoint = 0.0
+
+    def __str__(self):
+        args = [self.number, self.op, self.metering_end,
+                self.ac_bus, self.dc_bus, self.neutral_bus, self.type,
+                self.nominal_current,
+                self.converter_ctr_mode, self.voltage_ctr_mode,
+                self.aloss, self.bloss, self.minloss,
+                self.flow_ac_dc, self.flow_dc_ac, self.max_current,
+                self.power_factor, self.qmin, self.qmax,
+                self.ctr_bus_number, self.ctr_bus_name,
+                self.rmpct,
+                self.cost, self.date, self.cnd, self.name, self.stt,
+                self.setpoint]
+        return "{:6d},\"{:1s}\",\"{:1s}\",{:6d},{:6d},{:6d}," \
+               "\"{:1s}\",{:8.3f},\"{:1s}\",\"{:1s}\"," \
+               "{:8.3f},{:8.3f},{:8.3f}," \
+               "{:8.3f},{:8.3f},{:8.3f}," \
+               "{:8.3f},{:8.3f},{:8.3f}," \
+               "{:6d},\"{:12s}\",{:8.3f},{:8.3f}," \
+               "\"{:10s}\",\"{:1s}\",\"{:12s}\"," \
+               "{:1d},{:8.3f}".format(*args)
