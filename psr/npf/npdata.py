@@ -375,17 +375,17 @@ class Line(RecordType):
 
     def __init__(self):
         super(Line, self).__init__()
-        self.from_bus_number = 0
-        self.to_bus_number = 0
-        self.parallel_circuit_number = 0
+        self.from_bus = None
+        self.to_bus = None
+        self.parallel_circuit_number = 1
         self.op = OP_ADD
         # Metering end: (F)rom or (T)o bus.
         self.metering_end = METERING_END_FROM
         self.r_pct = 0.0
         self.x_pct = 0.0
         self.mvar = 0.0
-        self.nominal_rating = 0.0
-        self.emergency_rating = 0.0
+        self.nominal_rating = 9999.0
+        self.emergency_rating = 9999.0
         self.power_factor = 0.0
         self.cost = 0.0
         self.date = DEFAULT_DATE
@@ -402,7 +402,10 @@ class Line(RecordType):
         self.extended_name = ""
 
     def __str__(self):
-        args = [self.from_bus_number, self.to_bus_number,
+        from_bus_number = self.from_bus.number \
+            if self.from_bus is not None else 0
+        to_bus_number = self.to_bus.number if self.to_bus is not None else 0
+        args = [from_bus_number, to_bus_number,
                 self.parallel_circuit_number, self.op, self.metering_end,
                 self.r_pct, self.x_pct, self.mvar, self.nominal_rating,
                 self.emergency_rating, self.power_factor, self.cost,
@@ -430,10 +433,8 @@ class BusShunt(RecordType):
         self.number = 0
         self.name = ""
         self.op = OP_ADD
-        self.bus_number = 0
-        self.bus_name = ""
-        self.ctr_bus_number = 0
-        self.ctr_bus_name = ""
+        self.bus = None
+        self.ctr_bus = None
         self.type = BusShunt.REACTOR
         # TODO: create enumeration for control types.
         self.ctr_type = 0
@@ -445,9 +446,13 @@ class BusShunt(RecordType):
         self.units_on = 1
 
     def __str__(self):
+        bus_number = self.bus.number if self.bus is not None else 0
+        bus_name = self.bus.name if self.bus is not None else ""
+        ctr_bus_number = self.ctr_bus.number if self.ctr_bus is not None else 0
+        ctr_bus_name = self.ctr_bus.name if self.ctr_bus is not None else ""
         args = [self.number, self.name, self.op,
-                self.bus_number, self.bus_name,
-                self.ctr_bus_number, self.ctr_bus_name,
+                bus_number, bus_name,
+                ctr_bus_number, ctr_bus_name,
                 self.type, self.ctr_type, self.units, self.mvar, self.cost,
                 self.date, self.cnd, self.units_on,
                 ]
@@ -470,9 +475,7 @@ class LineShunt(RecordType):
         self.number = 0
         self.name = ""
         self.op = OP_ADD
-        self.from_bus_number = 0
-        self.to_bus_number = 0
-        self.parallel_number = 0
+        self.circuit = None
         self.mvar = 0.0
         # Connection terminal: (F)rom bus or (T)o bus.
         self.terminal = LineShunt.TERMINAL_FROM
@@ -481,13 +484,19 @@ class LineShunt(RecordType):
         self.date = DEFAULT_DATE
         self.cnd = CND_REGISTRY
         self.stt = STATUS_ON
-        self.circuit_number = 0
 
     def __str__(self):
+        circ_from_number = self.circuit.from_bus.number \
+            if self.circuit is not None else ""
+        circ_to_number = self.circuit.to_bus.number \
+            if self.circuit is not None else 0
+        circ_number = self.circuit.number if self.circuit is not None else 0
+        circ_parallel = self.circuit.parallel_circuit_number\
+            if self.circuit is not None else 0
         args = [self.number, self.name, self.op,
-                self.from_bus_number, self.to_bus_number,
-                self.parallel_number, self.mvar, self.terminal, self.cost,
-                self.date, self.cnd, self.stt, self.circuit_number]
+                circ_from_number, circ_to_number,
+                circ_parallel, self.mvar, self.terminal, self.cost,
+                self.date, self.cnd, self.stt, circ_number]
         return "{:6d},\"{:12s}\",\"{:1s}\",{:6d},{:6d},{:2d},{:8.3f}," \
                "\"{:1s}\",{:8.3f},\"{:10s}\",\"{:1s}\"," \
                "{:1d},{:3d}".format(*args)
