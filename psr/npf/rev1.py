@@ -28,6 +28,9 @@ STATUS_ON = 1
 # Status off value.
 STATUS_OFF = 0
 
+# Absolute maximum value of circuit flow.
+FLOW_MAX = 9999.0
+
 
 def to_date_str(date):
     # type: (datetime.datetime) -> str
@@ -384,8 +387,8 @@ class Line(RecordType):
         self.r_pct = 0.0
         self.x_pct = 0.0
         self.mvar = 0.0
-        self.nominal_rating = 9999.0
-        self.emergency_rating = 9999.0
+        self.nominal_rating = FLOW_MAX
+        self.emergency_rating = FLOW_MAX
         self.power_factor = 0.0
         self.cost = 0.0
         self.date = DEFAULT_DATE
@@ -513,22 +516,22 @@ class Transformer(RecordType):
 
     def __init__(self):
         super(Transformer, self).__init__()
-        self.from_bus_number = 0
-        self.to_bus_number = 0
-        self.parallel_circuit_number = 0
+        self.from_bus = None
+        self.to_bus = None
+        self.parallel_circuit_number = 1
         self.op = OP_ADD
         self.metering_end = METERING_END_FROM
         self.r_pct = 0
         self.x_pct = 0
-        self.tap_min = 0
-        self.tap_max = 0
-        self.phase_min = 0
-        self.phase_max = 0
+        self.tap_min = 0.8
+        self.tap_max = 1.2
+        self.phase_min = 0.0
+        self.phase_max = 0.0
         self.control_type = 0
-        self.ctr_bus_number = 0
-        self.tap_steps = 0
-        self.nominal_rating = 0
-        self.emergency_rating = 0
+        self.ctr_bus = None
+        self.tap_steps = 20
+        self.nominal_rating = FLOW_MAX
+        self.emergency_rating = FLOW_MAX
         self.power_factor = 0
         self.cost = 0
         self.date = DEFAULT_DATE
@@ -538,19 +541,25 @@ class Transformer(RecordType):
         self.env = 0
         self.extended_name = ""
         self.stt = STATUS_ON
-        self.tap = 0
-        self.phase = 0
-        self.minflow = 0
-        self.maxflow = 0
-        self.emergency_minflow = 0
-        self.emergency_maxflow = 0
+        self.tap = 1.0
+        self.phase = 0.0
+        self.minflow = -FLOW_MAX
+        self.maxflow = +FLOW_MAX
+        self.emergency_minflow = -FLOW_MAX
+        self.emergency_maxflow = +FLOW_MAX
 
     def __str__(self):
-        args = [self.from_bus_number, self.to_bus_number,
+        from_bus_number = self.from_bus.number \
+            if self.from_bus is not None else 0
+        to_bus_number = self.to_bus.number \
+            if self.to_bus is not None else 0
+        ctr_bus_number = self.ctr_bus.number \
+            if self.ctr_bus is not None else 0
+        args = [from_bus_number, to_bus_number,
                 self.parallel_circuit_number, self.op, self.metering_end,
                 self.r_pct, self.x_pct, self.tap_min, self.tap_max,
                 self.phase_min, self.phase_max, self.control_type,
-                self.ctr_bus_number, self.tap_steps, self.nominal_rating,
+                ctr_bus_number, self.tap_steps, self.nominal_rating,
                 self.emergency_rating, self.power_factor, self.cost,
                 self.date, self.cnd, self.series_number, self.name, self.env,
                 self.extended_name, self.stt, self.tap, self.phase,
@@ -636,29 +645,32 @@ class ControlledSeriesCapacitor(RecordType):
 
     def __init__(self):
         super(ControlledSeriesCapacitor, self).__init__()
-        self.from_bus_number = 0
-        self.to_bus_number = 0
-        self.parallel_circuit_number = 0
+        self.from_bus = None
+        self.to_bus = None
+        self.parallel_circuit_number = 1
         self.op = OP_ADD
         self.metering_end = METERING_END_FROM
-        self.xmin_pct = 0
-        self.xmax_pct = 0
-        self.nominal_rating = 0
-        self.emergency_rating = 0
-        self.power_factor = 0
-        self.cost = 0
+        self.xmin_pct = 0.0
+        self.xmax_pct = 0.0
+        self.nominal_rating = FLOW_MAX
+        self.emergency_rating = FLOW_MAX
+        self.power_factor = 0.0
+        self.cost = 0.0
         self.date = DEFAULT_DATE
         self.cnd = CND_REGISTRY
         self.series_number = 0
         self.name = ""
         self.control_mode = ""
         self.stt = STATUS_ON
-        self.bypass = 0
-        self.setpoint = 0
+        self.bypass = STATUS_OFF
+        self.setpoint = 0.0
 
     def __str__(self):
+        from_bus_number = self.from_bus.number if self.from_bus is not None else 0
+        to_bus_number = self.to_bus.number if self.to_bus is not None else 0
+
         args = [
-            self.from_bus_number, self.to_bus_number,
+            from_bus_number, to_bus_number,
             self.parallel_circuit_number, self.op, self.metering_end,
             self.xmin_pct, self.xmax_pct,
             self.nominal_rating, self.emergency_rating,
@@ -684,13 +696,11 @@ class StaticVarCompensator(RecordType):
         self.number = 0
         self.name = ""
         self.op = OP_ADD
-        self.bus_number = 0
-        self.bus_name = ""
-        self.ctr_bus_number = 0
-        self.ctr_bus_name = ""
+        self.bus = None
+        self.ctr_bus = None
         self.droop = 0.0
         self.ctr_mode = 0
-        self.units = 0
+        self.units = 1
         self.qmin = 0
         self.qmax = 0
         self.cost = 0
@@ -700,13 +710,17 @@ class StaticVarCompensator(RecordType):
         self.mvar_setpoint = 0
 
     def __str__(self):
-        args = [self.number, self.name, self.op, self.bus_number,
-                self.bus_name, self.ctr_bus_number, self.ctr_bus_name,
+        bus_number = self.bus.number if self.bus is not None else 0
+        bus_name = self.bus.name if self.bus is not None else ""
+        ctr_bus_number = self.ctr_bus.number if self.ctr_bus is not None else 0
+        ctr_bus_name = self.ctr_bus.name if self.ctr_bus is not None else ""
+        args = [self.number, self.name, self.op, bus_number,
+                bus_name, ctr_bus_number, ctr_bus_name,
                 self.droop, self.ctr_mode, self.units, self.qmin, self.qmax,
                 self.cost, self.date, self.cnd, self.stt, self.mvar_setpoint]
         return "{:6d},\"{:12s}\",\"{:1s}\",{:6d},\"{:12s}\"," \
                "{:6d},\"{:12s}\",{:8.3f},{:3d},{:3d},{:8.3f},{:8.3f}," \
-               "{:8.3f},\"{:10s}\",\"{:1s}\",{:1d},{:8.3f}".format(*args)
+               "{:8.2f},\"{:10s}\",\"{:1s}\",{:1d},{:8.3f}".format(*args)
 
 
 class DcLink(RecordType):
