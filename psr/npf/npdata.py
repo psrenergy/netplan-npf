@@ -1,3 +1,38 @@
+import datetime
+
+# Add operation.
+OP_ADD = "A"
+# Modify operation.
+OP_MOD = "M"
+# Remove operation.
+OP_REM = "R"
+
+# Registry condition.
+CND_REGISTRY = "R"
+# Planned condition.
+CND_PLANNED = "P"
+
+# Circuit metering end on "from" bus.
+METERING_END_FROM = "F"
+# Circuit metering end on "to" bus.
+METERING_END_TO = "T"
+
+# Default date
+DEFAULT_DATE = "1900/01/01"
+
+# now.strftime("%m/%d/%Y, %H:%M:%S")
+DATE_FORMAT = "%Y/%m/%d"
+
+# Status on value.
+STATUS_ON = 1
+# Status off value.
+STATUS_OFF = 0
+
+
+def to_date_str(date):
+    # type: (datetime.datetime) -> str
+    """Convert a datetime object into NetPlan's date string format."""
+    return date.strftime(DATE_FORMAT)
 
 
 class StarpointFile:
@@ -210,15 +245,15 @@ class Bus(RecordType):
 
     def __init__(self):
         super(Bus, self).__init__()
-        self.bus = 0
+        self.number = 0
         self.name = ""
-        self.op = ""
+        self.op = OP_ADD
         self.kvbase = 0
         self.area_number = 0
         self.region_number = 0
         self.system_number = 0
-        self.date = ""
-        self.cnd = ""
+        self.date = DEFAULT_DATE
+        self.cnd = CND_REGISTRY
         self.cost = 0
         self.type = 0
         self.loadshed = 0
@@ -228,17 +263,17 @@ class Bus(RecordType):
         self.vmin = 0
         self.evmax = 0
         self.evmin = 0
-        self.stt = 0
+        self.stt = STATUS_ON
         self.extended_name = ""
 
     def __str__(self):
-        args = [self.bus, self.name, self.op, self.kvbase, self.area_number,
+        args = [self.number, self.name, self.op, self.kvbase, self.area_number,
                 self.region_number, self.system_number, self.date, self.cnd,
                 self.cost, self.type, self.loadshed, self.volt, self.angle,
                 self.vmax, self.vmin, self.evmax, self.evmin, self.stt,
                 self.extended_name]
-        return "{:6d},\"{:12s}\",\"{:1s}\",{:3.2f},{:2d},{:2d},{:2d}," \
-               "\"{:10s}\",\"{:1s}\",{:8.2f},{:1d},{:1d},{:8.3f},{:8.3f}," \
+        return "{:6d},\"{:12s}\",\"{:1s}\",{:8.2f},{:2d},{:2d},{:2d}," \
+               "\"{:10s}\",\"{:1s}\",{:7.2f},{:1d},{:1d},{:8.3f},{:8.3f}," \
                "{:8.3f},{:8.3f},{:8.3f},{:8.3f},{:1d},\"{:12s}\"".format(*args)
 
 
@@ -260,12 +295,12 @@ class Demand(RecordType):
         super(Demand, self).__init__()
         self.number = 0
         self.name = ""
-        self.op = "A"
+        self.op = OP_ADD
         self.bus_number = 0
         self.bus_name = ""
         self.units = 0
-        self.date = ""
-        self.cnd = ""
+        self.date = DEFAULT_DATE
+        self.cnd = CND_REGISTRY
         self.p_mw = 0.0
         self.q_mw = 0.0
 
@@ -284,29 +319,33 @@ class Generator(RecordType):
               "Units,Pmin,Pmax,Qmin,Qmax,\"[..Date..]\",\"C\"," \
               "CtrBus#,\"[CtrBusName]\",CtrType,Factor,UnitsOn,Pgen,Qgen"
 
+    TYPE_HYDRO = "H"
+    TYPE_THERMAL = "T"
+    TYPE_RENEWABLE = "R"
+
     def __init__(self):
         super(Generator, self).__init__()
         self.number = 0
         self.name = ""
-        self.op = ""
+        self.op = OP_ADD
         self.bus = 0
         self.bus_name = ""
         # Generator type: (H)ydro, (T)hermal, (R)enewable.
-        self.type = ""
-        self.units = 0
+        self.type = Generator.TYPE_THERMAL
+        self.units = 1
         self.pmin = 0
         self.pmax = 0
         self.qmin = 0
         self.qmax = 0
-        self.date = ""
-        self.cnd = ""
+        self.date = DEFAULT_DATE
+        self.cnd = CND_REGISTRY
         self.ctr_bus = 0
         self.ctr_bus_name = ""
         self.ctr_type = 0
-        self.factor = 0
-        self.units_on = 0
-        self.pgen = 0
-        self.qgen = 0
+        self.factor = 0.0
+        self.units_on = 1
+        self.pgen = 0.0
+        self.qgen = 0.0
 
     def __str__(self):
         args = [self.number, self.name, self.op, self.bus, self.bus_name,
@@ -333,26 +372,27 @@ class Line(RecordType):
         self.from_bus_number = 0
         self.to_bus_number = 0
         self.parallel_circuit_number = 0
-        self.op = ""
+        self.op = OP_ADD
         # Metering end: (F)rom or (T)o bus.
-        self.metering_end = ""
-        self.r_pct = 0
-        self.x_pct = 0
-        self.mvar = 0
-        self.nominal_rating = 0
-        self.emergency_rating = 0
-        self.power_factor = 0
-        self.cost = 0
-        self.date = ""
-        self.cnd = ""
+        self.metering_end = METERING_END_FROM
+        self.r_pct = 0.0
+        self.x_pct = 0.0
+        self.mvar = 0.0
+        self.nominal_rating = 0.0
+        self.emergency_rating = 0.0
+        self.power_factor = 0.0
+        self.cost = 0.0
+        self.date = DEFAULT_DATE
+        self.cnd = CND_REGISTRY
         self.number = 0
         # circuit type
+        # TODO: create enumeration for different types.
         self.type = 0
         self.name = ""
         # environment factor (0/1)
         self.env_factor = 0
         self.length_km = 0
-        self.stt = 0
+        self.stt = STATUS_ON
         self.extended_name = ""
 
     def __str__(self):
@@ -376,23 +416,27 @@ class BusShunt(RecordType):
               "CtrBus#,\"[.Ctr Name.]\",\"T\",CtrType,Units,MVAr,Cost," \
               "\"[..Date..]\",\"Cnd\",UnitsOn"
 
+    REACTOR = "R"
+    CAPACITOR = "C"
+
     def __init__(self):
         super(BusShunt, self).__init__()
         self.number = 0
         self.name = ""
-        self.op = ""
+        self.op = OP_ADD
         self.bus_number = 0
         self.bus_name = ""
         self.ctr_bus_number = 0
         self.ctr_bus_name = ""
-        self.type = ""
+        self.type = BusShunt.REACTOR
+        # TODO: create enumeration for control types.
         self.ctr_type = 0
-        self.units = 0
+        self.units = 1
         self.mvar = 0.0
         self.cost = 0.0
-        self.date = ""
-        self.cnd = ""
-        self.units_on = 0
+        self.date = DEFAULT_DATE
+        self.cnd = CND_REGISTRY
+        self.units_on = 1
 
     def __str__(self):
         args = [self.number, self.name, self.op,
@@ -412,23 +456,25 @@ class LineShunt(RecordType):
     comment = "# Shunt#,\"[...Name...]\",\"Op\"," \
               "FromBus#,ToBus#,ParallelCirc#,MVAr,Term,Cost," \
               "\"[..Date..]\",\"Cnd\",Stt,Series#"
+    TERMINAL_FROM = "F"
+    TERMINAL_TO = "T"
 
     def __init__(self):
         super(LineShunt, self).__init__()
         self.number = 0
         self.name = ""
-        self.op = ""
+        self.op = OP_ADD
         self.from_bus_number = 0
         self.to_bus_number = 0
         self.parallel_number = 0
-        self.mvar = 0
+        self.mvar = 0.0
         # Connection terminal: (F)rom bus or (T)o bus.
-        self.terminal = ""
+        self.terminal = LineShunt.TERMINAL_FROM
         # Cost per unit in k$.
-        self.cost = 0
-        self.date = ""
-        self.cnd = ""
-        self.stt = 0
+        self.cost = 0.0
+        self.date = DEFAULT_DATE
+        self.cnd = CND_REGISTRY
+        self.stt = STATUS_ON
         self.circuit_number = 0
 
     def __str__(self):
@@ -455,8 +501,8 @@ class Transformer(RecordType):
         self.from_bus_number = 0
         self.to_bus_number = 0
         self.parallel_circuit_number = 0
-        self.op = ""
-        self.metering_end = ""
+        self.op = OP_ADD
+        self.metering_end = METERING_END_FROM
         self.r_pct = 0
         self.x_pct = 0
         self.tap_min = 0
@@ -470,13 +516,13 @@ class Transformer(RecordType):
         self.emergency_rating = 0
         self.power_factor = 0
         self.cost = 0
-        self.date = ""
-        self.cnd = ""
+        self.date = DEFAULT_DATE
+        self.cnd = CND_REGISTRY
         self.series_number = 0
         self.name = ""
         self.env = 0
         self.extended_name = ""
-        self.stt = 0
+        self.stt = STATUS_ON
         self.tap = 0
         self.phase = 0
         self.minflow = 0
@@ -526,8 +572,8 @@ class ThreeWindingTransformer(RecordType):
         self.tertiary_bus_number = 0
         self.middlepoint_bus_number = 0
         self.parallel_circuit_number = 0
-        self.op = ""
-        self.metering_end = ""
+        self.op = OP_ADD
+        self.metering_end = METERING_END_FROM
         self.rps_pct = 0
         self.xps_pct = 0
         self.sbaseps_mva = 0
@@ -539,8 +585,8 @@ class ThreeWindingTransformer(RecordType):
         self.sbasept_mva = 0
         self.power_factor = 0
         self.cost = 0
-        self.date = ""
-        self.cnd = ""
+        self.date = DEFAULT_DATE
+        self.cnd = CND_REGISTRY
         self.series_number = 0
         self.pritrf_name = ""
         self.sectrf_name = ""
@@ -578,20 +624,20 @@ class ControlledSeriesCapacitor(RecordType):
         self.from_bus_number = 0
         self.to_bus_number = 0
         self.parallel_circuit_number = 0
-        self.op = ""
-        self.metering_end = ""
+        self.op = OP_ADD
+        self.metering_end = METERING_END_FROM
         self.xmin_pct = 0
         self.xmax_pct = 0
         self.nominal_rating = 0
         self.emergency_rating = 0
         self.power_factor = 0
         self.cost = 0
-        self.date = ""
-        self.cnd = ""
+        self.date = DEFAULT_DATE
+        self.cnd = CND_REGISTRY
         self.series_number = 0
         self.name = ""
         self.control_mode = ""
-        self.stt = 0
+        self.stt = STATUS_ON
         self.bypass = 0
         self.setpoint = 0
 
@@ -622,7 +668,7 @@ class StaticVarCompensator(RecordType):
         super(StaticVarCompensator, self).__init__()
         self.number = 0
         self.name = ""
-        self.op = ""
+        self.op = OP_ADD
         self.bus_number = 0
         self.bus_name = ""
         self.ctr_bus_number = 0
@@ -633,9 +679,9 @@ class StaticVarCompensator(RecordType):
         self.qmin = 0
         self.qmax = 0
         self.cost = 0
-        self.date = ""
-        self.cnd = ""
-        self.stt = 0
+        self.date = DEFAULT_DATE
+        self.cnd = CND_REGISTRY
+        self.stt = STATUS_ON
         self.mvar_setpoint = 0
 
     def __str__(self):
@@ -676,7 +722,7 @@ class DcBus(RecordType):
         super(DcBus, self).__init__()
         self.number = 0
         self.name = ""
-        self.op = ""
+        self.op = OP_ADD
         self.type = 0
         self.polarity = ""
         self.groundr = 0.0
@@ -684,8 +730,8 @@ class DcBus(RecordType):
         self.region_number = 0
         self.system_number = 0
         self.dclink_number = 0
-        self.date = ""
-        self.cnd = ""
+        self.date = DEFAULT_DATE
+        self.cnd = CND_REGISTRY
         self.cost = 0.0
         self.volt = 0.0
 
@@ -710,16 +756,16 @@ class DcLine(RecordType):
         self.from_bus_number = 0
         self.to_bus_number = 0
         self.parallel_circuit_number = 0
-        self.op = ""
-        self.metering_end = ""
+        self.op = OP_ADD
+        self.metering_end = METERING_END_FROM
         self.r_ohm = 0.0
         self.l_ohm = 0.0
         self.nominal_rating = 0.0
-        self.date = ""
-        self.cnd = ""
+        self.date = DEFAULT_DATE
+        self.cnd = CND_REGISTRY
         self.series_number = 0
         self.name = ""
-        self.stt = 0
+        self.stt = STATUS_ON
 
     def __str__(self):
         args = [self.from_bus_number, self.to_bus_number,
@@ -742,8 +788,8 @@ class AcDcConverterLcc(RecordType):
     def __init__(self):
         super(AcDcConverterLcc, self).__init__()
         self.number = 0
-        self.op = ""
-        self.metering_end = ""
+        self.op = OP_ADD
+        self.metering_end = METERING_END_FROM
         self.ac_bus = 0
         self.dc_bus = 0
         self.neutral_bus = 0
@@ -768,11 +814,11 @@ class AcDcConverterLcc(RecordType):
         self.firing_angle_inverter_max = 0.0
         self.ccc_capacitance = 0.0
         self.cost = 0.0
-        self.date = ""
-        self.cnd = ""
+        self.date = DEFAULT_DATE
+        self.cnd = CND_REGISTRY
         self.name = ""
         self.hzbase = 0
-        self.stt = 0
+        self.stt = STATUS_ON
         self.tap = 0.0
         self.setpoint = 0.0
 
@@ -801,14 +847,14 @@ class AcDcConverterVsc(RecordType):
     header = "ACDC_CONVERTER_VSC"
     comment = "# Cnv#,\"Op\",\"MetEnd\",AcBus#,DcBus#,NeutralBus#,\"CnvMode\"," \
               "\"VoltMode\",Aloss,Bloss,Minloss,FlowAcDc,FlowDcAc,Imax,Pwf," \
-              "Qmin,Qmax,CtrBus#,\"[.Ctr Name.]\",Rmpct,Cost,Date,\"Cnd\"," \
-              "\"[...Name...]\",Stt,Setpoint"
+              "Qmin,Qmax,CtrBus#,\"[.Ctr Name.]\",Rmpct,Cost,\"[..Date..]\"," \
+              "\"Cnd\",\"[...Name...]\",Stt,Setpoint"
 
     def __init__(self):
         super(AcDcConverterVsc, self).__init__()
         self.number = 0
-        self.op = ""
-        self.metering_end = ""
+        self.op = OP_ADD
+        self.metering_end = METERING_END_FROM
         self.ac_bus = 0
         self.dc_bus = 0
         self.neutral_bus = 0
@@ -829,10 +875,10 @@ class AcDcConverterVsc(RecordType):
         self.ctr_bus_name = ""
         self.rmpct = 0.0
         self.cost = 0.0
-        self.date = ""
-        self.cnd = ""
+        self.date = DEFAULT_DATE
+        self.cnd = CND_REGISTRY
         self.name = ""
-        self.stt = 0
+        self.stt = STATUS_ON
         self.setpoint = 0.0
 
     def __str__(self):
