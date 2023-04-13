@@ -195,6 +195,52 @@ trf67.name = "TR67-SVC"
 data.transformers.append(trf67)
 series_count += 1
 
+# Three-winding transformer
+# It's composed of three equivalent two-winding transformers and a
+# middle point bus.
+middle_bus = psr.npf.MiddlePointBus()
+middle_bus.number = 8
+middle_bus.name = "Midpoint"
+middle_bus.kvbase = 1.0
+middle_bus.system = system
+middle_bus.area = area1
+middle_bus.region = region
+data.middlepoint_buses.append(middle_bus)
+
+eqv_trf1 = psr.npf.EquivalentTransformer()
+eqv_trf1.series_number = series_count
+eqv_trf1.from_bus = bus1
+eqv_trf1.to_bus = middle_bus
+eqv_trf1.name = "eqvtr1"
+data.equivalent_transformers.append(eqv_trf1)
+series_count += 1
+
+eqv_trf2 = psr.npf.EquivalentTransformer()
+eqv_trf2.series_number = series_count
+eqv_trf2.from_bus = bus2
+eqv_trf2.to_bus = middle_bus
+eqv_trf2.name = "eqvtr2"
+data.equivalent_transformers.append(eqv_trf2)
+series_count += 1
+
+eqv_trf3 = psr.npf.EquivalentTransformer()
+eqv_trf3.series_number = series_count
+eqv_trf3.from_bus = bus3
+eqv_trf3.to_bus = middle_bus
+eqv_trf3.name = "eqvtr3"
+data.equivalent_transformers.append(eqv_trf3)
+series_count += 1
+
+trf3 = psr.npf.ThreeWindingTransformer()
+trf3.series_number = series_count
+trf3.name = "TRF-GEN"
+trf3.primary_transformer = eqv_trf1
+trf3.secondary_transformer = eqv_trf2
+trf3.tertiary_transformer = eqv_trf3
+trf3.middlepoint_bus = middle_bus
+data.three_winding_transformers.append(trf3)
+series_count += 1
+
 
 # Controlled Series Capacitor
 csc = psr.npf.ControlledSeriesCapacitor()
@@ -364,13 +410,5 @@ vsc_cnv_inv.neutral_bus = vsc_bus8
 vsc_cnv_inv.ctr_bus = bus4
 data.vsc_converters.append(vsc_cnv_inv)
 
-
-# TODO: add missing components of the example.
-
-data.middlepoint_buses.append(psr.npf.MiddlePointBus())
-data.equivalent_transformers.append(psr.npf.EquivalentTransformer())
-data.equivalent_transformers.append(psr.npf.EquivalentTransformer())
-data.equivalent_transformers.append(psr.npf.EquivalentTransformer())
-data.three_winding_transformers.append(psr.npf.ThreeWindingTransformer())
 
 print(data)

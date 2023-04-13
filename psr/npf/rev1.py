@@ -601,11 +601,11 @@ class ThreeWindingTransformer(RecordType):
 
     def __init__(self):
         super(ThreeWindingTransformer, self).__init__()
-        self.primary_bus_number = 0
-        self.secondary_bus_number = 0
-        self.tertiary_bus_number = 0
-        self.middlepoint_bus_number = 0
-        self.parallel_circuit_number = 0
+        self.primary_transformer = None
+        self.secondary_transformer = None
+        self.tertiary_transformer = None
+        self.middlepoint_bus = None
+        self.parallel_circuit_number = 1
         self.op = OP_ADD
         self.metering_end = METERING_END_FROM
         self.rps_pct = 0
@@ -622,22 +622,33 @@ class ThreeWindingTransformer(RecordType):
         self.date = DEFAULT_DATE
         self.cnd = CND_REGISTRY
         self.series_number = 0
-        self.pritrf_name = ""
-        self.sectrf_name = ""
-        self.tertrf_name = ""
         self.name = ""
         self.extended_name = ""
 
     def __str__(self):
-        args = [self.primary_bus_number, self.secondary_bus_number,
-                self.tertiary_bus_number, self.middlepoint_bus_number,
+        primary_bus_number = self.primary_transformer.from_bus.number \
+            if self.primary_transformer is not None else 0
+        primary_name = self.primary_transformer.name \
+            if self.primary_transformer is not None else ""
+        secondary_bus_number = self.secondary_transformer.from_bus.number \
+            if self.secondary_transformer is not None else 0
+        secondary_name = self.secondary_transformer.name \
+            if self.secondary_transformer is not None else ""
+        tertiary_bus_number = self.tertiary_transformer.from_bus.number \
+            if self.tertiary_transformer is not None else 0
+        tertiary_name = self.tertiary_transformer.name \
+            if self.tertiary_transformer is not None else ""
+        middlepoint_bus_number = self.middlepoint_bus.number \
+            if self.middlepoint_bus is not None else 0
+        args = [primary_bus_number, secondary_bus_number,
+                tertiary_bus_number, middlepoint_bus_number,
                 self.parallel_circuit_number, self.op, self.metering_end,
                 self.rps_pct, self.xps_pct, self.sbaseps_mva,
                 self.rst_pct, self.xps_pct, self.sbaseps_mva,
                 self.rpt_pct, self.xpt_pct, self.sbasept_mva,
                 self.power_factor, self.cost, self.date, self.cnd,
-                self.series_number, self.pritrf_name, self.sectrf_name,
-                self.tertrf_name, self.name, self.extended_name]
+                self.series_number, primary_name, secondary_name,
+                tertiary_name, self.name, self.extended_name]
         return "{:6d},{:6d},{:6d},{:6d},{:2d},\"{:1s}\",\"{:1s}\"," \
                "{:8.3f},{:8.3f},{:8.3f}," \
                "{:8.3f},{:8.3f},{:8.3f}," \
