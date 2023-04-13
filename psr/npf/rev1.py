@@ -248,7 +248,7 @@ class Bus(RecordType):
         self.number = 0
         self.name = ""
         self.op = OP_ADD
-        self.kvbase = 0
+        self.kvbase = 1.0
         self.area = None
         self.region = None
         self.system = None
@@ -257,12 +257,12 @@ class Bus(RecordType):
         self.cost = 0
         self.type = 0
         self.loadshed = 0
-        self.volt = 0
-        self.angle = 0
-        self.vmax = 0
-        self.vmin = 0
-        self.evmax = 0
-        self.evmin = 0
+        self.volt = 1.0
+        self.angle = 0.0
+        self.vmax = 1.2
+        self.vmin = 0.8
+        self.evmax = 1.2
+        self.evmin = 0.8
         self.stt = STATUS_ON
         self.extended_name = ""
 
