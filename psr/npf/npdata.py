@@ -183,7 +183,7 @@ class System(RecordType):
 
     def __str__(self):
         args = [self.id, self.name, self.number, ]
-        return "\"{:2s}\",\"{:20s}\",{:2d}".format(*args)
+        return "  \"{:2s}\",\"{:20s}\",{:2d}".format(*args)
 
 
 class Region(RecordType):
@@ -199,15 +199,15 @@ class Region(RecordType):
         self.name = ""
         # Region unique number
         self.number = 0
-        # Number of the system the region is part of.
-        self.system_number = 0
-        # Two-character identifier of the system the region is part of.
-        self.system_id = ""
+        # System the region is part of.
+        self.system = None
 
     def __str__(self):
-        args = [self.id, self.name, self.number, self.system_number,
-                self.system_id]
-        return "\"{:2s}\",\"{:12s}\",{:2d},{:2d},\"{:2s}\"".format(*args)
+        system_number = self.system.number if self.system is not None else 0
+        system_id = self.system.id if self.system is not None else ""
+        args = [self.id, self.name, self.number, system_number,
+                system_id]
+        return "  \"{:4s}\",\"{:12s}\",{:2d},{:2d},\"{:2s}\"".format(*args)
 
 
 class Area(RecordType):
@@ -225,15 +225,15 @@ class Area(RecordType):
         self.name = ""
         # Unique area number.
         self.number = 0
-        # Number of the system this area is part of.
-        self.system_number = 0
-        # Two-chars unique identifier of the system this area is part of.
-        self.system_id = ""
+        # System the region is part of.
+        self.system = None
 
     def __str__(self):
-        args = [self.id, self.name, self.number, self.system_number,
-                self.system_id]
-        return "\"{:2s}\",\"{:36s}\",{:4d},{:2d},\"{:2s}\"".format(*args)
+        system_number = self.system.number if self.system is not None else 0
+        system_id = self.system.id if self.system is not None else ""
+        args = [self.id, self.name, self.number, system_number,
+                system_id]
+        return "  \"{:4s}\",\"{:36s}\",{:4d},{:2d},\"{:2s}\"".format(*args)
 
 
 class Bus(RecordType):
@@ -249,9 +249,9 @@ class Bus(RecordType):
         self.name = ""
         self.op = OP_ADD
         self.kvbase = 0
-        self.area_number = 0
-        self.region_number = 0
-        self.system_number = 0
+        self.area = None
+        self.region = None
+        self.system = None
         self.date = DEFAULT_DATE
         self.cnd = CND_REGISTRY
         self.cost = 0
@@ -267,8 +267,11 @@ class Bus(RecordType):
         self.extended_name = ""
 
     def __str__(self):
-        args = [self.number, self.name, self.op, self.kvbase, self.area_number,
-                self.region_number, self.system_number, self.date, self.cnd,
+        system_number = self.system.number if self.system is not None else 0
+        area_number = self.area.number if self.area is not None else 0
+        region_number = self.region.number if self.region is not None else 0
+        args = [self.number, self.name, self.op, self.kvbase, area_number,
+                region_number, system_number, self.date, self.cnd,
                 self.cost, self.type, self.loadshed, self.volt, self.angle,
                 self.vmax, self.vmin, self.evmax, self.evmin, self.stt,
                 self.extended_name]
@@ -296,20 +299,21 @@ class Demand(RecordType):
         self.number = 0
         self.name = ""
         self.op = OP_ADD
-        self.bus_number = 0
-        self.bus_name = ""
-        self.units = 0
+        self.bus = None
+        self.units = 1
         self.date = DEFAULT_DATE
         self.cnd = CND_REGISTRY
         self.p_mw = 0.0
         self.q_mw = 0.0
 
     def __str__(self):
+        bus_number = self.bus.number if self.bus is not None else 0
+        bus_name = self.bus.name if self.bus is not None else ""
         args = [self.number, self.name, self.op,
-                self.bus_number, self.bus_name, self.units, self.date,
+                bus_number, bus_name, self.units, self.date,
                 self.cnd, self.p_mw, self.q_mw]
-        return "{:7d},\"{:12s}\",\"{:1s}\",{:5d},\"{:12s}\",{:5d}," \
-               "\"{:10s}\",\"{:1s}\",{:8.4f},{:8.4f}".format(*args)
+        return "  {:7d},\"{:12s}\",\"{:1s}\",{:5d},\"{:12s}\",{:5d}," \
+               "\"{:10s}\",\"{:1s}\",{:8.3f},{:8.3f}".format(*args)
 
 
 class Generator(RecordType):
@@ -328,8 +332,7 @@ class Generator(RecordType):
         self.number = 0
         self.name = ""
         self.op = OP_ADD
-        self.bus = 0
-        self.bus_name = ""
+        self.bus = None
         # Generator type: (H)ydro, (T)hermal, (R)enewable.
         self.type = Generator.TYPE_THERMAL
         self.units = 1
@@ -339,8 +342,7 @@ class Generator(RecordType):
         self.qmax = 0
         self.date = DEFAULT_DATE
         self.cnd = CND_REGISTRY
-        self.ctr_bus = 0
-        self.ctr_bus_name = ""
+        self.ctr_bus = None
         self.ctr_type = 0
         self.factor = 0.0
         self.units_on = 1
@@ -348,10 +350,14 @@ class Generator(RecordType):
         self.qgen = 0.0
 
     def __str__(self):
-        args = [self.number, self.name, self.op, self.bus, self.bus_name,
+        bus_number = self.bus.number if self.bus is not None else 0
+        bus_name = self.bus.name if self.bus is not None else ""
+        ctr_bus_number = self.ctr_bus.number if self.ctr_bus is not None else 0
+        ctr_bus_name = self.ctr_bus.name if self.ctr_bus is not None else ""
+        args = [self.number, self.name, self.op, bus_number, bus_name,
                 self.type, self.units, self.pmin, self.pmax,
                 self.qmin, self.qmax, self.date, self.cnd,
-                self.ctr_bus, self.ctr_bus_name, self.ctr_type,
+                ctr_bus_number, ctr_bus_name, self.ctr_type,
                 self.factor, self.units_on, self.pgen, self.qgen]
         return "{:6d},\"{:12s}\",\"{:1s}\",{:6d},\"{:12s}\"," \
                "\"{:1s}\",{:3d},{:8.3f},{:8.3f},{:8.3f},{:8.3f}," \
