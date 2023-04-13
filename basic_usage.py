@@ -238,7 +238,139 @@ svc.qmin = -20.0
 svc.qmax = +20.0
 data.svcs.append(svc)
 
+# LCC DC Link components
+lcc_link = psr.npf.DcLink()
+lcc_link.number = 1
+lcc_link.name = "LCC Link"
+lcc_link.kvbase = 800.0
+lcc_link.mwbase = 400.0
+lcc_link.type = psr.npf.DcLink.TYPE_LCC
+data.dclinks.append(lcc_link)
+
+lcc_bus1 = psr.npf.DcBus()
+lcc_bus1.number = 1
+lcc_bus1.name = "DCB 1"
+lcc_bus1.region = region
+lcc_bus1.system = system
+lcc_bus1.area = area2
+lcc_bus1.dclink = lcc_link
+data.dcbuses.append(lcc_bus1)
+
+lcc_bus2 = copy.copy(lcc_bus1)
+lcc_bus2.number = 2
+lcc_bus2.name = "DCB 2"
+data.dcbuses.append(lcc_bus2)
+
+lcc_bus3 = copy.copy(lcc_bus1)
+lcc_bus3.number = 3
+lcc_bus3.name = "DCB 3N"
+lcc_bus3.volt = 0.0
+lcc_bus3.polarity = psr.npf.DcBus.POLARITY_NEUTRAL
+data.dcbuses.append(lcc_bus3)
+
+lcc_bus4 = copy.copy(lcc_bus3)
+lcc_bus4.number = 4
+lcc_bus4.name = "DCB 4N"
+data.dcbuses.append(lcc_bus4)
+
+lcc_line = psr.npf.Line()
+lcc_line.number = 1
+lcc_line.name = "DC Line 1-2"
+lcc_line.from_bus = lcc_bus1
+lcc_line.to_bus = lcc_bus2
+lcc_line.r_ohm = 10.0
+lcc_line.series_number = series_count
+data.dclines.append(lcc_line)
+series_count += 1
+
+lcc_cnv_ret = psr.npf.AcDcConverterLcc()
+lcc_cnv_ret.number = 1
+lcc_cnv_ret.name = "LCC RET"
+lcc_cnv_ret.ac_bus = bus3
+lcc_cnv_ret.dc_bus = lcc_bus1
+lcc_cnv_ret.neutral_bus = lcc_bus3
+lcc_cnv_ret.type = psr.npf.AcDcConverterLcc.TYPE_RETIFIER
+data.lcc_converters.append(lcc_cnv_ret)
+
+lcc_cnv_inv = psr.npf.AcDcConverterLcc()
+lcc_cnv_inv.number = 2
+lcc_cnv_inv.name = "LCC INV"
+lcc_cnv_inv.ac_bus = bus4
+lcc_cnv_inv.dc_bus = lcc_bus2
+lcc_cnv_inv.neutral_bus = lcc_bus4
+lcc_cnv_inv.type = psr.npf.AcDcConverterLcc.TYPE_INVERTER
+data.lcc_converters.append(lcc_cnv_inv)
+
+# VSC DC Link components
+vsc_link = psr.npf.DcLink()
+vsc_link.number = 2
+vsc_link.name = "VSC Link"
+vsc_link.kvbase = 400.0
+vsc_link.mwbase = 200.0
+vsc_link.type = psr.npf.DcLink.TYPE_VSC
+data.dclinks.append(vsc_link)
+
+vsc_bus5 = psr.npf.DcBus()
+vsc_bus5.number = 5
+vsc_bus5.name = "DCB 5"
+vsc_bus5.region = region
+vsc_bus5.system = system
+vsc_bus5.area = area2
+vsc_bus5.dclink = vsc_link
+data.dcbuses.append(vsc_bus5)
+
+vsc_bus6 = copy.copy(vsc_bus5)
+vsc_bus6.number = 6
+vsc_bus6.name = "DCB 6"
+data.dcbuses.append(vsc_bus6)
+
+vsc_bus7 = copy.copy(vsc_bus5)
+vsc_bus7.number = 7
+vsc_bus7.name = "DCB 7N"
+vsc_bus7.volt = 0.0
+vsc_bus7.polarity = psr.npf.DcBus.POLARITY_NEUTRAL
+data.dcbuses.append(vsc_bus7)
+
+vsc_bus8 = copy.copy(vsc_bus5)
+vsc_bus8.number = 8
+vsc_bus8.name = "DCB 8N"
+data.dcbuses.append(vsc_bus8)
+
+vsc_line = psr.npf.Line()
+vsc_line.number = 2
+vsc_line.name = "DC Line 5-6"
+vsc_line.from_bus = vsc_bus5
+vsc_line.to_bus = vsc_bus6
+vsc_line.r_ohm = 10.0
+vsc_line.series_number = series_count
+data.dclines.append(vsc_line)
+series_count += 1
+
+vsc_cnv_ret = psr.npf.AcDcConverterVsc()
+vsc_cnv_ret.number = 3
+vsc_cnv_ret.name = "VSC RET"
+vsc_cnv_ret.ac_bus = bus3
+vsc_cnv_ret.dc_bus = vsc_bus5
+vsc_cnv_ret.neutral_bus = vsc_bus7
+vsc_cnv_ret.ctr_bus = bus3
+data.vsc_converters.append(vsc_cnv_ret)
+
+vsc_cnv_inv = psr.npf.AcDcConverterVsc()
+vsc_cnv_inv.number = 4
+vsc_cnv_inv.name = "VSC INV"
+vsc_cnv_inv.ac_bus = bus4
+vsc_cnv_inv.dc_bus = vsc_bus6
+vsc_cnv_inv.neutral_bus = vsc_bus8
+vsc_cnv_inv.ctr_bus = bus4
+data.vsc_converters.append(vsc_cnv_inv)
+
+
 # TODO: add missing components of the example.
 
+data.middlepoint_buses.append(psr.npf.MiddlePointBus())
+data.equivalent_transformers.append(psr.npf.EquivalentTransformer())
+data.equivalent_transformers.append(psr.npf.EquivalentTransformer())
+data.equivalent_transformers.append(psr.npf.EquivalentTransformer())
+data.three_winding_transformers.append(psr.npf.ThreeWindingTransformer())
 
 print(data)

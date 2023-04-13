@@ -1,5 +1,15 @@
 import datetime
 
+
+# Default MVA/MW base.
+MVABASE = 100.0
+
+# Default kV base.
+KVBASE = 1.0
+
+# Default frequency (Hz) base.
+HZBASE = 50
+
 # Add operation.
 OP_ADD = "A"
 # Modify operation.
@@ -727,13 +737,16 @@ class DcLink(RecordType):
     header = "DC_LINK"
     comment = "# Link#,\"[...Name...]\",kVbase,MWbase,\"Type\""
 
+    TYPE_LCC = "LCC"
+    TYPE_VSC = "VSC"
+
     def __init__(self):
         super(DcLink, self).__init__()
         self.number = 0
         self.name = ""
-        self.kvbase = 0.0
-        self.mwbase = 0.0
-        self.type = ""
+        self.kvbase = KVBASE
+        self.mwbase = MVABASE
+        self.type = DcLink.TYPE_LCC
 
     def __str__(self):
         args = [self.number, self.name,
@@ -747,28 +760,36 @@ class DcBus(RecordType):
               "Area#,Region#,System#,DcLink#," \
               "\"[..Date..]\",\"Cnd\",Cost,Volt"
 
+    POLARITY_POSITIVE = "+"
+    POLARITY_NEGATIVE = "-"
+    POLARITY_NEUTRAL = "0"
+
     def __init__(self):
         super(DcBus, self).__init__()
         self.number = 0
         self.name = ""
         self.op = OP_ADD
         self.type = 0
-        self.polarity = ""
+        self.polarity = DcBus.POLARITY_POSITIVE
         self.groundr = 0.0
-        self.area_number = 0
-        self.region_number = 0
-        self.system_number = 0
-        self.dclink_number = 0
+        self.area = None
+        self.region = None
+        self.system = None
+        self.dclink = None
         self.date = DEFAULT_DATE
         self.cnd = CND_REGISTRY
         self.cost = 0.0
-        self.volt = 0.0
+        self.volt = 1.0
 
     def __str__(self):
+        area_number = self.area.number if self.area is not None else 0
+        region_number = self.region.number if self.region is not None else 0
+        system_number = self.system.number if self.system is not None else 0
+        dclink_number = self.dclink.number if self.dclink is not None else 0
         args = [self.number, self.name, self.op,
                 self.type, self.polarity, self.groundr,
-                self.area_number, self.region_number, self.system_number,
-                self.dclink_number, self.date, self.cnd, self.cost, self.volt]
+                area_number, region_number, system_number,
+                dclink_number, self.date, self.cnd, self.cost, self.volt]
         return "{:6d},\"{:12s}\",\"{:1s}\",{:1d},\"{:1s}\"," \
                "{:8.3f},{:4d},{:4d},{:4d},{:4d},\"{:10s}\"," \
                "\"{:1s}\",{:8.3f},{:8.3f}".format(*args)
@@ -782,14 +803,14 @@ class DcLine(RecordType):
 
     def __init__(self):
         super(DcLine, self).__init__()
-        self.from_bus_number = 0
-        self.to_bus_number = 0
-        self.parallel_circuit_number = 0
+        self.from_bus = None
+        self.to_bus = None
+        self.parallel_circuit_number = 1
         self.op = OP_ADD
         self.metering_end = METERING_END_FROM
         self.r_ohm = 0.0
         self.l_ohm = 0.0
-        self.nominal_rating = 0.0
+        self.nominal_rating = FLOW_MAX
         self.date = DEFAULT_DATE
         self.cnd = CND_REGISTRY
         self.series_number = 0
@@ -797,7 +818,9 @@ class DcLine(RecordType):
         self.stt = STATUS_ON
 
     def __str__(self):
-        args = [self.from_bus_number, self.to_bus_number,
+        from_bus_number = self.from_bus.number if self.from_bus is not None else 0
+        to_bus_number = self.to_bus.number if self.to_bus is not None else 0
+        args = [from_bus_number, to_bus_number,
                 self.parallel_circuit_number, self.op, self.metering_end,
                 self.r_ohm, self.l_ohm, self.nominal_rating, self.date,
                 self.cnd, self.series_number, self.name, self.stt]
@@ -814,27 +837,31 @@ class AcDcConverterLcc(RecordType):
               "FirR,FirRmin,FirRmax,FirI,FirImin,FirImax,CCCC,Cost," \
               "\"[..Date..]\",\"Cnd\",\"[...Name...]\",Hz,Stt,Tap,Setpoint"
 
+    TYPE_RETIFIER = "R"
+    TYPE_INVERTER = "I"
+    TYPE_BIDIRECTIONAL = "B"
+
     def __init__(self):
         super(AcDcConverterLcc, self).__init__()
         self.number = 0
         self.op = OP_ADD
         self.metering_end = METERING_END_FROM
-        self.ac_bus = 0
-        self.dc_bus = 0
-        self.neutral_bus = 0
+        self.ac_bus = None
+        self.dc_bus = None
+        self.neutral_bus = None
         # Type: (R)etifier or (I)nverter
-        self.type = ""
+        self.type = AcDcConverterLcc.TYPE_RETIFIER
         self.nominal_current = 0.0
-        self.bridges = 0
+        self.bridges = 2
         self.xc = 0.0
         self.vfs = 0.0
         self.nominal_power = 0.0
-        self.tap_min = 0
-        self.tap_max = 0
-        self.tap_steps = 0
-        self.control_mode = ""
-        self.flow_ac_dc = 0.0
-        self.flow_dc_ac = 0.0
+        self.tap_min = 0.8
+        self.tap_max = 1.2
+        self.tap_steps = 100
+        self.control_mode = "P"
+        self.flow_ac_dc = FLOW_MAX
+        self.flow_dc_ac = FLOW_MAX
         self.firing_angle_retifier_set = 0.0
         self.firing_angle_retifier_min = 0.0
         self.firing_angle_retifier_max = 0.0
@@ -846,14 +873,18 @@ class AcDcConverterLcc(RecordType):
         self.date = DEFAULT_DATE
         self.cnd = CND_REGISTRY
         self.name = ""
-        self.hzbase = 0
+        self.hzbase = HZBASE
         self.stt = STATUS_ON
-        self.tap = 0.0
+        self.tap = 1.0
         self.setpoint = 0.0
 
     def __str__(self):
+        ac_bus_number = self.ac_bus.number if self.ac_bus is not None else 0
+        dc_bus_number = self.dc_bus.number if self.dc_bus is not None else 0
+        neutral_bus_number = self.neutral_bus.number \
+            if self.neutral_bus is not None else 0
         args = [self.number, self.op, self.metering_end,
-                self.ac_bus, self.dc_bus, self.neutral_bus,
+                ac_bus_number, dc_bus_number, neutral_bus_number,
                 self.type, self.nominal_current, self.bridges, self.xc,
                 self.vfs, self.nominal_power,
                 self.tap_min, self.tap_max, self.tap_steps,
@@ -884,9 +915,9 @@ class AcDcConverterVsc(RecordType):
         self.number = 0
         self.op = OP_ADD
         self.metering_end = METERING_END_FROM
-        self.ac_bus = 0
-        self.dc_bus = 0
-        self.neutral_bus = 0
+        self.ac_bus = None
+        self.dc_bus = None
+        self.neutral_bus = None
         self.type = ""
         self.nominal_current = 0.0
         self.converter_ctr_mode = ""
@@ -900,8 +931,7 @@ class AcDcConverterVsc(RecordType):
         self.power_factor = 0.0
         self.qmin = 0.0
         self.qmax = 0.0
-        self.ctr_bus_number = 0
-        self.ctr_bus_name = ""
+        self.ctr_bus = None
         self.rmpct = 0.0
         self.cost = 0.0
         self.date = DEFAULT_DATE
@@ -911,14 +941,20 @@ class AcDcConverterVsc(RecordType):
         self.setpoint = 0.0
 
     def __str__(self):
+        ac_bus_number = self.ac_bus.number if self.ac_bus is not None else 0
+        dc_bus_number = self.dc_bus.number if self.dc_bus is not None else 0
+        neutral_bus_number = self.neutral_bus.number \
+            if self.neutral_bus is not None else 0
+        ctr_bus_number = self.ctr_bus.number if self.ctr_bus is not None else 0
+        ctr_bus_name = self.ctr_bus.name if self.ctr_bus is not None else ""
         args = [self.number, self.op, self.metering_end,
-                self.ac_bus, self.dc_bus, self.neutral_bus, self.type,
+                ac_bus_number, dc_bus_number, neutral_bus_number, self.type,
                 self.nominal_current,
                 self.converter_ctr_mode, self.voltage_ctr_mode,
                 self.aloss, self.bloss, self.minloss,
                 self.flow_ac_dc, self.flow_dc_ac, self.max_current,
                 self.power_factor, self.qmin, self.qmax,
-                self.ctr_bus_number, self.ctr_bus_name,
+                ctr_bus_number, ctr_bus_name,
                 self.rmpct,
                 self.cost, self.date, self.cnd, self.name, self.stt,
                 self.setpoint]
