@@ -49,6 +49,10 @@ STATUS_OFF = 0
 FLOW_MAX = 9999.0
 
 
+class NpfException(Exception):
+    pass
+
+
 def to_date_str(date):
     # type: (datetime.datetime) -> str
     """Convert a datetime object into NetPlan's date string format."""
@@ -113,6 +117,44 @@ class NpFile:
         self.lcc_converters = []
         self.vsc_converters = []
 
+    def find_system(self, system_number):
+        # type: (int) -> "System"
+        for system in self.systems:
+            if system.number == system_number:
+                return system
+        raise NpfException("Could not find system #{}".format(system_number))
+
+    def find_region(self, region_number):
+        # type: (int) -> "Region"
+        for region in self.regions:
+            if region.number == region_number:
+                return region
+        raise NpfException("Could not find region #{}".format(region_number))
+
+    def find_area(self, area_number):
+        # type: (int) -> "Area"
+        for area in self.areas:
+            if area.number == area_number:
+                return area
+        raise NpfException("Could not find area #{}".format(area_number))
+
+    def find_bus(self, bus_number):
+        # type: (int) -> "Bus"
+        for bus in self.buses:
+            if bus.number == bus_number:
+                return bus
+        raise NpfException("Could not find area #{}".format(bus_number))
+
+    def find_line(self, from_bus, to_bus, ncir):
+        # type: (int, int, int) -> "Line"
+        for line in self.lines:
+            if line.from_bus.number == from_bus and \
+                    line.to_bus.number == to_bus and \
+                    line.parallel_circuit_number == ncir:
+                return line
+        raise NpfException("Could not find line from bus #{} to bus #{} #{}"
+                           .format(from_bus, to_bus, ncir))
+
     @staticmethod
     def _append_elements(contents, header, comment, elements):
         # type: (list, str, str, list) -> None
@@ -127,12 +169,12 @@ class NpFile:
                     "DESCRIPTION", self.description, ]
 
         header_elements_pairs = (
+            (System.header, System.comment, self.systems),
+            (Region.header, Region.comment, self.regions),
+            (Area.header, Area.comment, self.areas),
             (Bus.header, Bus.comment, self.buses),
             (MiddlePointBus.header, MiddlePointBus.comment,
              self.middlepoint_buses),
-            (Area.header, Area.comment, self.areas),
-            (Region.header, Region.comment, self.regions),
-            (System.header, System.comment, self.systems),
             (Demand.header, Demand.comment, self.demands),
             (Generator.header, Generator.comment, self.generators),
             (BusShunt.header, BusShunt.comment, self.bus_shunts),
@@ -251,7 +293,7 @@ class NpFile:
                                                        data_file)
                     data.vsc_converters.extend(lines)
                 else:
-                    raise Exception("Could not parse line:\n{}".format(line))
+                    raise NpfException("Could not parse line:\n{}".format(line))
         return data
 
     def _parse_until_end(self, element_class, data_file):
@@ -367,12 +409,7 @@ class Region(RecordType):
         obj.id, obj.name, number_str, system_number_str,\
             system_id = _to_csv_list(line)
         obj.number = int(number_str)
-        system_number = int(system_number_str)
-        system = None
-        for system in data.systems:
-            if system.number == system_number:
-                break
-        obj.system = system
+        obj.system = data.find_system(int(system_number_str))
         return obj
 
 
@@ -400,6 +437,16 @@ class Area(RecordType):
         args = [self.id, self.name, self.number, system_number,
                 system_id]
         return "  \"{:4s}\",\"{:36s}\",{:4d},{:2d},\"{:2s}\"".format(*args)
+
+    @staticmethod
+    def read_from_str(data, line):
+        # type: ("NpFile", str) -> "Area"
+        obj = Area()
+        obj.id, obj.name, number_str, system_number_str,\
+            system_id = _to_csv_list(line)
+        obj.number = int(number_str)
+        obj.system = data.find_system(int(system_number_str))
+        return obj
 
 
 class Bus(RecordType):
@@ -445,6 +492,37 @@ class Bus(RecordType):
                "\"{:10s}\",\"{:1s}\",{:7.2f},{:1d},{:1d},{:8.3f},{:8.3f}," \
                "{:8.3f},{:8.3f},{:8.3f},{:8.3f},{:1d},\"{:12s}\"".format(*args)
 
+    @staticmethod
+    def read_from_str(data, line):
+        # type: ("NpFile", str) -> "Bus"
+        obj = Bus()
+        obj.load_from(data, line)
+        return obj
+
+    def load_from(self, data, line):
+        # type: ("NpFile", str) -> None
+
+        number_str, self.name, self.op, kv_str, area_str, region_str,\
+            system_str, self.date, self.cnd, cost_str, type_str, lds_str,\
+            volt_str, angle_str, vmax_str, vmin_str, evmax_str, evmin_str,\
+            stt_str, self.extended_name = _to_csv_list(line)
+
+        self.number = int(number_str)
+        self.system = data.find_system(int(system_str))
+        self.area = data.find_area(int(area_str))
+        self.region = data.find_region(int(region_str))
+        self.kvbase = float(kv_str)
+        self.cost = float(cost_str)
+        self.type = int(type_str)
+        self.loadshed = int(lds_str)
+        self.volt = float(volt_str)
+        self.angle = float(angle_str)
+        self.vmax = float(vmax_str)
+        self.vmin = float(vmin_str)
+        self.evmax = float(evmax_str)
+        self.evmin = float(evmin_str)
+        self.stt = int(stt_str)
+
 
 class MiddlePointBus(Bus):
     header = "MIDDLEPOINT_BUS"
@@ -452,6 +530,13 @@ class MiddlePointBus(Bus):
 
     def __init__(self):
         super(MiddlePointBus, self).__init__()
+
+    @staticmethod
+    def read_from_str(data, line):
+        # type: ("NpFile", str) -> "MiddlePointBus"
+        obj = MiddlePointBus()
+        obj.load_from(data, line)
+        return obj
 
 
 class Demand(RecordType):
@@ -481,12 +566,25 @@ class Demand(RecordType):
         return "  {:7d},\"{:12s}\",\"{:1s}\",{:5d},\"{:12s}\",{:5d}," \
                "\"{:10s}\",\"{:1s}\",{:8.3f},{:8.3f}".format(*args)
 
+    @staticmethod
+    def read_from_str(data, line):
+        # type: ("NpFile", str) -> "Demand"
+        obj = Demand()
+        number_str, obj.name, obj.op, bus_number, _,\
+            units_str, obj.date, obj.cnd, p_str, q_str = _to_csv_list(line)
+        obj.number = int(number_str)
+        obj.bus = data.find_bus(int(bus_number))
+        obj.units = int(units_str)
+        obj.p_mw = float(p_str)
+        obj.q_mw = float(q_str)
+        return obj
+
 
 class Generator(RecordType):
     """Generator data."""
     header = "GENERATOR"
-    comment = "# Gen#,\"[...Name...]\",\"Op\",Bus#,\"[.Bus Name.]\",\"Type\"," \
-              "Units,Pmin,Pmax,Qmin,Qmax,\"[..Date..]\",\"C\"," \
+    comment = "# Gen#,\"[...Name...]\",\"Op\",Bus#,\"[.Bus Name.]\"," \
+              "\"Type\",Units,Pmin,Pmax,Qmin,Qmax,\"[..Date..]\",\"C\"," \
               "CtrBus#,\"[CtrBusName]\",CtrType,Factor,UnitsOn,Pgen,Qgen"
 
     TYPE_HYDRO = "H"
@@ -529,6 +627,30 @@ class Generator(RecordType):
                "\"{:1s}\",{:3d},{:8.3f},{:8.3f},{:8.3f},{:8.3f}," \
                "\"{:10s}\",\"{:1s}\",{:6d},\"{:12s}\",{:1d}," \
                "{:8.3f},{:3d},{:8.3f},{:8.3f}".format(*args)
+
+    @staticmethod
+    def read_from_str(data, line):
+        # type: ("NpFile", str) -> "Generator"
+        obj = Generator()
+        number_str, obj.name, obj.op, bus_number, _,\
+            obj.type, units_str, pmin_str, pmax_str,\
+            qmin_str, qmax_str, obj.date, obj.cnd,\
+            ctr_bus_number, _, ctr_type_str, factor_str,\
+            units_on_str, pgen_str, qgen_str = _to_csv_list(line)
+        obj.number = int(number_str)
+        obj.bus = data.find_bus(int(bus_number))
+        obj.ctr_bus = data.find_bus(int(ctr_bus_number))
+        obj.units = int(units_str)
+        obj.units_on = int(units_on_str)
+        obj.ctr_type = int(units_str)
+        obj.factor = float(factor_str)
+        obj.pmax = float(pmax_str)
+        obj.pmin = float(pmin_str)
+        obj.qmax = float(qmax_str)
+        obj.qmin = float(qmin_str)
+        obj.pgen = float(pgen_str)
+        obj.qgen = float(qgen_str)
+        return obj
 
 
 class Line(RecordType):
@@ -583,6 +705,32 @@ class Line(RecordType):
                "{:8.3f},{:8.3f},\"{:10s}\",\"{:1s}\",{:6d}," \
                "{:1d},\"{:12s}\",{:1d},{:8.3f},{:1d},\"{:12s}\"".format(*args)
 
+    @staticmethod
+    def read_from_str(data, line):
+        # type: ("NpFile", str) -> "Line"
+        obj = Line()
+        from_number, to_number, ncir, obj.op, obj.metering_end,\
+            r_str, x_str, mvar_str, rat_str, emg_str, pf_str, \
+            cost_str, obj.date, obj.cnd, series_str, type_str, \
+            obj.name, env_str, len_str, stt_str, \
+            obj.extended_name = _to_csv_list(line)
+        obj.series_number = int(series_str)
+        obj.from_bus = data.find_bus(int(from_number))
+        obj.to_bus = data.find_bus(int(to_number))
+        obj.parallel_circuit_number = int(ncir)
+        obj.type = int(type_str)
+        obj.r_pct = float(r_str)
+        obj.x_pct = float(x_str)
+        obj.mvar_pct = float(mvar_str)
+        obj.nominal_rating = float(rat_str)
+        obj.emergency_rating = float(emg_str)
+        obj.power_factor = float(pf_str)
+        obj.cost = float(cost_str)
+        obj.env_factor = int(env_str)
+        obj.length_km = float(len_str)
+        obj.stt = int(stt_str)
+        return obj
+
 
 class BusShunt(RecordType):
     """Bus shunt data."""
@@ -626,6 +774,22 @@ class BusShunt(RecordType):
                "{:6d},\"{:12s}\",\"{:1s}\",{:1d},{:3d},{:8.3f}," \
                "{:8.3f},\"{:10s}\",\"{:1s}\",{:1d}".format(*args)
 
+    @staticmethod
+    def read_from_str(data, line):
+        # type: ("NpFile", str) -> "BusShunt"
+        obj = BusShunt()
+        number_str, obj.name, obj.op, bus_str, _, ctr_str, _,\
+            obj.type, ctr_type_str, units_str, mvar_str, cost_str, obj.date, \
+            obj.cnd, units_on_str = _to_csv_list(line)
+        obj.number = int(number_str)
+        obj.bus = data.find_bus(int(bus_str))
+        obj.ctr_bus = data.find_bus(int(ctr_str))
+        obj.units = int(units_str)
+        obj.units_on = int(units_on_str)
+        obj.mvar = float(mvar_str)
+        obj.cost = float(cost_str)
+        return obj
+
 
 class LineShunt(RecordType):
     """Line shunt data."""
@@ -666,6 +830,19 @@ class LineShunt(RecordType):
         return "{:6d},\"{:12s}\",\"{:1s}\",{:6d},{:6d},{:2d},{:8.3f}," \
                "\"{:1s}\",{:8.3f},\"{:10s}\",\"{:1s}\"," \
                "{:1d},{:3d}".format(*args)
+
+    @staticmethod
+    def read_from_str(data, line):
+        # type: ("NpFile", str) -> "LineShunt"
+        obj = LineShunt()
+        number_str, obj.name, obj.op, from_str, to_str, ncir,\
+            mvar_str, obj.terminal, cost_str, obj.date, \
+            obj.cnd, stt_str, _ = _to_csv_list(line)
+        obj.number = int(number_str)
+        obj.circuit = data.find_line(int(from_str), int(to_str), int(ncir))
+        obj.mvar = float(mvar_str)
+        obj.cost = float(cost_str)
+        return obj
 
 
 class Transformer(RecordType):
@@ -841,7 +1018,8 @@ class ControlledSeriesCapacitor(RecordType):
         self.setpoint = 0.0
 
     def __str__(self):
-        from_bus_number = self.from_bus.number if self.from_bus is not None else 0
+        from_bus_number = self.from_bus.number \
+            if self.from_bus is not None else 0
         to_bus_number = self.to_bus.number if self.to_bus is not None else 0
 
         args = [
@@ -962,8 +1140,8 @@ class DcBus(RecordType):
 
 class DcLine(RecordType):
     header = "DC_LINE"
-    comment = "# FromBus#,ToBus#,ParallelCirc#,\"Op\",\"MetEnd\",R_Ohm,L_Ohm," \
-              "NominalRating,Cost,Date,Cnd,Series#," \
+    comment = "# FromBus#,ToBus#,ParallelCirc#,\"Op\",\"MetEnd\"," \
+              "R_Ohm,L_Ohm,NominalRating,Cost,Date,Cnd,Series#," \
               "\"[.........Name.........]\",Stt"
 
     def __init__(self):
@@ -983,7 +1161,8 @@ class DcLine(RecordType):
         self.stt = STATUS_ON
 
     def __str__(self):
-        from_bus_number = self.from_bus.number if self.from_bus is not None else 0
+        from_bus_number = self.from_bus.number \
+            if self.from_bus is not None else 0
         to_bus_number = self.to_bus.number if self.to_bus is not None else 0
         args = [from_bus_number, to_bus_number,
                 self.parallel_circuit_number, self.op, self.metering_end,
@@ -1070,10 +1249,10 @@ class AcDcConverterLcc(RecordType):
 
 class AcDcConverterVsc(RecordType):
     header = "ACDC_CONVERTER_VSC"
-    comment = "# Cnv#,\"Op\",\"MetEnd\",AcBus#,DcBus#,NeutralBus#,\"CnvMode\"," \
-              "\"VoltMode\",Aloss,Bloss,Minloss,FlowAcDc,FlowDcAc,Imax,Pwf," \
-              "Qmin,Qmax,CtrBus#,\"[.Ctr Name.]\",Rmpct,Cost,\"[..Date..]\"," \
-              "\"Cnd\",\"[...Name...]\",Stt,Setpoint"
+    comment = "# Cnv#,\"Op\",\"MetEnd\",AcBus#,DcBus#,NeutralBus#," \
+              "\"CnvMode\",\"VoltMode\",Aloss,Bloss,Minloss,FlowAcDc," \
+              "FlowDcAc,Imax,Pwf,Qmin,Qmax,CtrBus#,\"[.Ctr Name.]\"," \
+              "Rmpct,Cost,\"[..Date..]\",\"Cnd\",\"[...Name...]\",Stt,Setpoint"
 
     def __init__(self):
         super(AcDcConverterVsc, self).__init__()
