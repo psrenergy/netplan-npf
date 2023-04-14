@@ -1,4 +1,11 @@
+import csv
 import datetime
+import io
+import sys
+
+
+_IS_PY2 = sys.version_info[0] == 2
+_IS_PY3 = sys.version_info[0] == 3
 
 
 # Default MVA/MW base.
@@ -106,7 +113,8 @@ class NpFile:
         self.lcc_converters = []
         self.vsc_converters = []
 
-    def _append_elements(self, contents, header, comment, elements):
+    @staticmethod
+    def _append_elements(contents, header, comment, elements):
         # type: (list, str, str, list) -> None
         contents.append(header)
         contents.append(comment)
@@ -149,15 +157,131 @@ class NpFile:
         )
 
         for header, comment, elements in header_elements_pairs:
-            self._append_elements(contents, header, comment, elements)
+            NpFile._append_elements(contents, header, comment, elements)
 
         return "\n".join(contents)
+
+    @staticmethod
+    def _is_comment(line):
+        # type: (str) -> bool
+        return len(line) == 0 or (len(line) > 0 and line[0] == "#")
+
+    @staticmethod
+    def from_file(file_path):
+        # type: (str) -> "NpFile"
+        data = NpFile()
+        with open(file_path, "r") as data_file:
+            while True:
+                original_line = data_file.readline()
+                line = original_line.strip()
+                if len(original_line) == 0:
+                    break
+                elif NpFile._is_comment(line):
+                    continue
+                elif line == "NPF_REVISION":
+                    rev_str = data_file.readline().strip()
+                    data.revision = int(rev_str)
+                elif line == "DESCRIPTION":
+                    data.description = data_file.readline().strip()
+                elif line == "BUS":
+                    buses = data._parse_until_end(Bus, data_file)
+                    data.buses.extend(buses)
+                elif line == "MIDDLEPOINT_BUS":
+                    buses = data._parse_until_end(MiddlePointBus, data_file)
+                    data.middlepoint_buses.extend(buses)
+                elif line == "AREA":
+                    areas = data._parse_until_end(Area, data_file)
+                    data.areas.extend(areas)
+                elif line == "REGION":
+                    regions = data._parse_until_end(Region, data_file)
+                    data.regions.extend(regions)
+                elif line == "SYSTEM":
+                    systems = data._parse_until_end(System, data_file)
+                    data.systems.extend(systems)
+                elif line == "DEMAND":
+                    demands = data._parse_until_end(Demand, data_file)
+                    data.demands.extend(demands)
+                elif line == "GENERATOR":
+                    generators = data._parse_until_end(Generator, data_file)
+                    data.generators.extend(generators)
+                elif line == "BUS_SHUNT":
+                    bus_shunts = data._parse_until_end(BusShunt, data_file)
+                    data.bus_shunts.extend(bus_shunts)
+                elif line == "LINE":
+                    lines = data._parse_until_end(Line, data_file)
+                    data.lines.extend(lines)
+                elif line == "LINE_SHUNT":
+                    shunts = data._parse_until_end(LineShunt, data_file)
+                    data.line_shunts.extend(shunts)
+                elif line == "TRANSFORMER":
+                    transformers = data._parse_until_end(Transformer,
+                                                         data_file)
+                    data.transformers.extend(transformers)
+                elif line == "EQUIVALENT_TRANSFORMER":
+                    transformers = data._parse_until_end(
+                        EquivalentTransformer, data_file)
+                    data.equivalent_transformers.extend(transformers)
+                elif line == "THREE_WINDING_TRANSFORMER":
+                    transformers = data._parse_until_end(
+                        ThreeWindingTransformer, data_file)
+                    data.three_winding_transformers.extend(transformers)
+                elif line == "CSC":
+                    capacitors = data._parse_until_end(
+                        ControlledSeriesCapacitor, data_file)
+                    data.cscs.extend(capacitors)
+                elif line == "SVC":
+                    svcs = data._parse_until_end(
+                        StaticVarCompensator, data_file)
+                    data.svcs.extend(svcs)
+                elif line == "DC_LINK":
+                    links = data._parse_until_end(DcLink, data_file)
+                    data.dclinks.extend(links)
+                elif line == "DC_BUS":
+                    buses = data._parse_until_end(DcBus, data_file)
+                    data.dcbuses.extend(buses)
+                elif line == "DC_LINE":
+                    lines = data._parse_until_end(DcLine, data_file)
+                    data.dclines.extend(lines)
+                elif line == "ACDC_CONVERTER_LCC":
+                    converters = data._parse_until_end(AcDcConverterLcc,
+                                                       data_file)
+                    data.lcc_converters.extend(lines)
+                elif line == "ACDC_CONVERTER_VSC":
+                    converters = data._parse_until_end(AcDcConverterVsc,
+                                                       data_file)
+                    data.vsc_converters.extend(lines)
+                else:
+                    raise Exception("Could not parse line:\n{}".format(line))
+        return data
+
+    def _parse_until_end(self, element_class, data_file):
+        elements = []
+        while True:
+            original_line = data_file.readline()
+            line = original_line.strip()
+            if line == "END" or len(original_line) == 0:
+                break
+            elif NpFile._is_comment(line):
+                continue
+            else:
+                elements.append(element_class.read_from_str(self, line))
+        return elements
 
 
 def _to_str(value):
     if isinstance(value, str):
         return "".join(["\"", value, "\""])
     return str(value)
+
+
+if _IS_PY3:
+    def _to_csv_list(line):
+        # type: (str) -> list
+        return next(csv.reader(io.StringIO(line)))
+else:
+    def _to_csv_list(line):
+        # type: (str) -> list
+        return next(csv.reader(io.StringIO(line.decode("utf-8"))))
 
 
 class RecordType(object):
@@ -179,6 +303,11 @@ class RecordType(object):
     def __repr__(self):
         return self.__str__()
 
+    @staticmethod
+    def read_from_str(data, line):
+        # type: ("NpFile", str) -> "RecordType"
+        return RecordType()
+
 
 class System(RecordType):
     """System data."""
@@ -198,11 +327,20 @@ class System(RecordType):
         args = [self.id, self.name, self.number, ]
         return "  \"{:2s}\",\"{:20s}\",{:2d}".format(*args)
 
+    @staticmethod
+    def read_from_str(data, line):
+        # type: ("NpFile", str) -> "System"
+        obj = System()
+        obj.id, obj.name, number_str = _to_csv_list(line)
+        obj.number = int(number_str)
+        return obj
+
 
 class Region(RecordType):
     """Region data."""
     header = "REGION"
-    comment = "# \"[ID]\",\"[........Name......]\",Region#,System#,\"SystemID\""
+    comment = "# \"[ID]\",\"[........Name......]\",Region#,System#," \
+              "\"SystemID\""
 
     def __init__(self):
         super(Region, self).__init__()
@@ -221,6 +359,21 @@ class Region(RecordType):
         args = [self.id, self.name, self.number, system_number,
                 system_id]
         return "  \"{:4s}\",\"{:12s}\",{:2d},{:2d},\"{:2s}\"".format(*args)
+
+    @staticmethod
+    def read_from_str(data, line):
+        # type: ("NpFile", str) -> "Region"
+        obj = Region()
+        obj.id, obj.name, number_str, system_number_str,\
+            system_id = _to_csv_list(line)
+        obj.number = int(number_str)
+        system_number = int(system_number_str)
+        system = None
+        for system in data.systems:
+            if system.number == system_number:
+                break
+        obj.system = system
+        return obj
 
 
 class Area(RecordType):
