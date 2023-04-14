@@ -662,7 +662,7 @@ class ControlledSeriesCapacitor(RecordType):
     header = "CSC"
     comment = "# FromBus#,ToBus#,ParallelCirc#,\"Op\",\"MetEnd\"," \
               "Xmin%,Xmax%,NomRating,EmgRating,PF,Cost,\"[..Date..]\"," \
-              "\"Cnd\",Series#,\"[...Name...]\",\"CM\",\"M\",Stt," \
+              "\"Cnd\",Series#,\"[...Name...]\",\"CM\",Stt," \
               "Bypass,Setpoint"
 
     def __init__(self):
@@ -809,8 +809,8 @@ class DcBus(RecordType):
 
 class DcLine(RecordType):
     header = "DC_LINE"
-    comment = "# FromBus#,ToBus#,ParallelCirc#,\"Op\",\"MetEnd\",R_Ohm,L_Ohm," \
-              "NominalRating,Cost,Date,Cnd,Series#," \
+    comment = "# FromBus#,ToBus#,ParallelCirc#,\"Op\",\"MetEnd\"," \
+              "R_Ohm,L_Ohm,NominalRating,Cost,\"[..Date..]\",Cnd,Series#," \
               "\"[.........Name.........]\",Stt"
 
     def __init__(self):
@@ -823,6 +823,7 @@ class DcLine(RecordType):
         self.r_ohm = 0.0
         self.l_ohm = 0.0
         self.nominal_rating = FLOW_MAX
+        self.cost = 0.0
         self.date = DEFAULT_DATE
         self.cnd = CND_REGISTRY
         self.series_number = 0
@@ -834,10 +835,10 @@ class DcLine(RecordType):
         to_bus_number = self.to_bus.number if self.to_bus is not None else 0
         args = [from_bus_number, to_bus_number,
                 self.parallel_circuit_number, self.op, self.metering_end,
-                self.r_ohm, self.l_ohm, self.nominal_rating, self.date,
-                self.cnd, self.series_number, self.name, self.stt]
+                self.r_ohm, self.l_ohm, self.nominal_rating, self.cost,
+                self.date, self.cnd, self.series_number, self.name, self.stt]
         return "{:6d},{:6d},{:3d},\"{:1s}\",\"{:1s}\"," \
-               "{:8.3f},{:8.3f},{:8.3f},\"{:10s}\"," \
+               "{:8.3f},{:8.3f},{:8.3f},{:8.3f},\"{:10s}\"," \
                "\"{:1s}\",{:6d},\"{:24s}\",{:1d}".format(*args)
 
 

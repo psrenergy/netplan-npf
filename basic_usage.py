@@ -321,7 +321,7 @@ lcc_bus4.number = 4
 lcc_bus4.name = "DCB 4N"
 data.dcbuses.append(lcc_bus4)
 
-lcc_line = psr.npf.Line()
+lcc_line = psr.npf.DcLine()
 lcc_line.number = 1
 lcc_line.name = "DC Line 1-2"
 lcc_line.from_bus = lcc_bus1
@@ -384,7 +384,7 @@ vsc_bus8.number = 8
 vsc_bus8.name = "DCB 8N"
 data.dcbuses.append(vsc_bus8)
 
-vsc_line = psr.npf.Line()
+vsc_line = psr.npf.DcLine()
 vsc_line.number = 2
 vsc_line.name = "DC Line 5-6"
 vsc_line.from_bus = vsc_bus5
