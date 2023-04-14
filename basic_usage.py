@@ -32,12 +32,14 @@ area1 = psr.npf.Area()
 area1.number = 1
 area1.name = "Generation Area"
 area1.id = "ar01"
+area1.system = system
 data.areas.append(area1)
 
 area2 = psr.npf.Area()
 area2.number = 2
 area2.name = "Transmission Area"
 area2.id = "ar02"
+area2.system = system
 data.areas.append(area2)
 
 region = psr.npf.Region()
