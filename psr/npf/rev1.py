@@ -138,6 +138,13 @@ class NpFile:
                 return area
         raise NpfException("Could not find area #{}".format(area_number))
 
+    def find_dclink(self, link_number):
+        # type: (int) -> "DcLink"
+        for dclink in self.dclinks:
+            if dclink.number == link_number:
+                return dclink
+        raise NpfException("Could not find DC link #{}".format(link_number))
+
     def find_bus(self, bus_number):
         # type: (int) -> Union["Bus", "MiddlePointBus"]
         for bus in self.buses:
@@ -1148,6 +1155,30 @@ class ControlledSeriesCapacitor(RecordType):
                "\"{:10s}\",\"{:1s}\",{:6d},\"{:12s}\",\"{:1s}\",{:1d}," \
                "{:1d},{:8.3f}".format(*args)
 
+    @staticmethod
+    def read_from_str(data, line):
+        # type: ("NpFile", str) -> "ControlledSeriesCapacitor"
+        obj = ControlledSeriesCapacitor()
+        from_bus, to_bus, ncir, obj.op, obj.metering_end,\
+            xmin, xmax, rat_str, emg_str, pf_str, cost_str, \
+            obj.date, obj.cnd, series_str, obj.name, \
+            obj.control_mode, stt_str, byp_str, set_str = _to_csv_list(line)
+
+        obj.from_bus = data.find_bus(int(from_bus))
+        obj.to_bus = data.find_bus(int(to_bus))
+        obj.parallel_circuit_number = int(ncir)
+        obj.xmax_pct = float(xmax)
+        obj.xmin_pct = float(xmin)
+        obj.nominal_rating = float(rat_str)
+        obj.emergency_rating = float(emg_str)
+        obj.power_factor = float(pf_str)
+        obj.cost_str = float(cost_str)
+        obj.series_number = int(series_str)
+        obj.stt = int(stt_str)
+        obj.bypass = int(byp_str)
+        obj.setpoint = float(set_str)
+        return obj
+
 
 class StaticVarCompensator(RecordType):
     """Static var compensator data."""
@@ -1188,6 +1219,28 @@ class StaticVarCompensator(RecordType):
                "{:8.2f},\"{:10s}\",\"{:1s}\",{:1d},{:8.3f}".format(*args)
 
 
+    @staticmethod
+    def read_from_str(data, line):
+        # type: ("NpFile", str) -> "StaticVarCompensator"
+        obj = StaticVarCompensator()
+        number_str, obj.name, obj.op, bus_str, _, ctr_str, _,\
+            droop_str, mode_str, units_str, qmin_str, qmax_str,\
+            cost_str, obj.date, obj.cnd, stt_str, set_str = _to_csv_list(line)
+
+        obj.number = int(number_str)
+        obj.bus = data.find_bus(int(bus_str))
+        obj.ctr_bus = data.find_bus(int(ctr_str))
+        obj.ctr_mode = int(mode_str)
+        obj.qmin = float(qmin_str)
+        obj.qmax = float(qmax_str)
+        obj.cost = float(cost_str)
+        obj.droop = float(droop_str)
+        obj.units = int(units_str)
+        obj.stt = int(stt_str)
+        obj.mvar_setpoint = float(set_str)
+        return obj
+
+
 class DcLink(RecordType):
     header = "DC_LINK"
     comment = "# Link#,\"[...Name...]\",kVbase,MWbase,\"Type\""
@@ -1207,6 +1260,16 @@ class DcLink(RecordType):
         args = [self.number, self.name,
                 self.kvbase, self.mwbase, self.type]
         return "{:4d},\"{:12s}\",{:8.3f},{:8.3f},\"{:3s}\"".format(*args)
+
+    @staticmethod
+    def read_from_str(data, line):
+        # type: ("NpFile", str) -> "DcLink"
+        obj = DcLink()
+        number_str, obj.name, kv_str, mw_str, obj.type = _to_csv_list(line)
+        obj.number = int(number_str)
+        obj.kvbase = float(kv_str)
+        obj.mwbase = float(mw_str)
+        return obj
 
 
 class DcBus(RecordType):
@@ -1249,6 +1312,24 @@ class DcBus(RecordType):
                "{:8.3f},{:4d},{:4d},{:4d},{:4d},\"{:10s}\"," \
                "\"{:1s}\",{:8.3f},{:8.3f}".format(*args)
 
+    @staticmethod
+    def read_from_str(data, line):
+        # type: ("NpFile", str) -> "DcBus"
+        obj = DcBus()
+        number_str, obj.name, obj.op, type_str, obj.polarity,\
+            groundr, area_str, region_str, system_str, dclink_str, \
+            obj.date, obj.cnd, cost_str, volt_str = _to_csv_list(line)
+        obj.number = int(number_str)
+        obj.type = int(type_str)
+        obj.groundr = float(groundr)
+        obj.area = data.find_area(int(area_str))
+        obj.region = data.find_region(int(region_str))
+        obj.system = data.find_system(int(region_str))
+        obj.dclink = data.find_dclink(int(dclink_str))
+        obj.cost = float(cost_str)
+        obj.volt = float(volt_str)
+        return obj
+
 
 class DcLine(RecordType):
     header = "DC_LINE"
@@ -1283,6 +1364,25 @@ class DcLine(RecordType):
         return "{:6d},{:6d},{:3d},\"{:1s}\",\"{:1s}\"," \
                "{:8.3f},{:8.3f},{:8.3f},\"{:10s}\"," \
                "\"{:1s}\",{:6d},\"{:24s}\",{:1d}".format(*args)
+
+    @staticmethod
+    def read_from_str(data, line):
+        # type: ("NpFile", str) -> "DcLine"
+        obj = DcLine()
+        fodasse = _to_csv_list(line)
+        from_str, to_str, ncir, obj.op, obj.metering_end,\
+            r_str, l_str, rat_str, cost_str, obj.date,\
+            obj.cnd, series_str, obj.name, stt_str = fodasse
+        obj.from_bus = data.find_bus(int(from_str))
+        obj.to_bus = data.find_bus(int(to_str))
+        obj.parallel_circuit_number = int(ncir)
+        obj.r_ohm = float(r_str)
+        obj.l_ohm = float(l_str)
+        obj.nominal_rating = float(rat_str)
+        obj.cost = float(cost_str)
+        obj.series_number = int(series_str)
+        obj.stt = int(stt_str)
+        return obj
 
 
 class AcDcConverterLcc(RecordType):
