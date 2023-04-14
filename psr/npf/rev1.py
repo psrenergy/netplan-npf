@@ -116,7 +116,7 @@ class NpFile:
 
     def __str__(self):
         contents = ["NPF_REVISION", str(self.revision),
-                    "DESCRIPTION", self.title, ]
+                    "DESCRIPTION", self.description, ]
 
         header_elements_pairs = (
             (Bus.header, Bus.comment, self.buses),
@@ -660,9 +660,10 @@ class ThreeWindingTransformer(RecordType):
 
 class ControlledSeriesCapacitor(RecordType):
     header = "CSC"
-    comment = "# FromBus#,ToBus#,ParallelCirc#,\"Op\",\"MetEnd\",Xmin%,Xmax%," \
-              "NomRating,EmgRating,PF,Cost,\"[..Date..]\",\"Cnd\"," \
-              "Series#,\"[...Name...]\",\"CM\",\"M\",Stt,Bypass,Setpoint"
+    comment = "# FromBus#,ToBus#,ParallelCirc#,\"Op\",\"MetEnd\"," \
+              "Xmin%,Xmax%,NomRating,EmgRating,PF,Cost,\"[..Date..]\"," \
+              "\"Cnd\",Series#,\"[...Name...]\",\"CM\",\"M\",Stt," \
+              "Bypass,Setpoint"
 
     def __init__(self):
         super(ControlledSeriesCapacitor, self).__init__()

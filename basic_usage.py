@@ -19,7 +19,7 @@ series_count = 1
 
 data = psr.npf.NpFile()
 data.revision = 1
-data.title = "Case title"
+data.description = "Case title"
 
 # Create system, area and region.
 system = psr.npf.System()
