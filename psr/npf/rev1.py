@@ -139,11 +139,14 @@ class NpFile:
         raise NpfException("Could not find area #{}".format(area_number))
 
     def find_bus(self, bus_number):
-        # type: (int) -> "Bus"
+        # type: (int) -> Union["Bus", "MiddlePointBus"]
         for bus in self.buses:
             if bus.number == bus_number:
                 return bus
-        raise NpfException("Could not find area #{}".format(bus_number))
+        for bus in self.middlepoint_buses:
+            if bus.number == bus_number:
+                return bus
+        raise NpfException("Could not find bus #{}".format(bus_number))
 
     def find_line(self, from_bus, to_bus, ncir):
         # type: (int, int, int) -> "Line"
@@ -152,8 +155,33 @@ class NpFile:
                     line.to_bus.number == to_bus and \
                     line.parallel_circuit_number == ncir:
                 return line
-        raise NpfException("Could not find line from bus #{} to bus #{} #{}"
+
+    def find_transformer(self, from_bus, to_bus, ncir):
+        # type: (int, int, int) -> Union["Transformer","EquivalentTransformer"]
+        for transformer in self.transformer:
+            if transformer.from_bus.number == from_bus and \
+                    transformer.to_bus.number == to_bus and \
+                    transformer.parallel_circuit_number == ncir:
+                return transformer
+        for transformer in self.equivalent_transformers:
+            if transformer.from_bus.number == from_bus and \
+                    transformer.to_bus.number == to_bus and \
+                    transformer.parallel_circuit_number == ncir:
+                return transformer
+        raise NpfException("Could not find transformer from bus #{} "
+                           "to bus #{} #{}"
                            .format(from_bus, to_bus, ncir))
+
+    def find_transformer_by_name(self, name):
+        # type: (str) -> Union["Transformer","EquivalentTransformer"]
+        for transformer in self.transformers:
+            if transformer.name.strip() == name:
+                return transformer
+        for transformer in self.equivalent_transformers:
+            if transformer.name.strip() == name:
+                return transformer
+        raise NpfException("Could not find transformer with name \"{}\""
+                           .format(name))
 
     @staticmethod
     def _append_elements(contents, header, comment, elements):
@@ -287,11 +315,11 @@ class NpFile:
                 elif line == "ACDC_CONVERTER_LCC":
                     converters = data._parse_until_end(AcDcConverterLcc,
                                                        data_file)
-                    data.lcc_converters.extend(lines)
+                    data.lcc_converters.extend(converters)
                 elif line == "ACDC_CONVERTER_VSC":
                     converters = data._parse_until_end(AcDcConverterVsc,
                                                        data_file)
-                    data.vsc_converters.extend(lines)
+                    data.vsc_converters.extend(converters)
                 else:
                     raise NpfException("Could not parse line:\n{}".format(line))
         return data
@@ -911,6 +939,49 @@ class Transformer(RecordType):
                "{:6d},\"{:12s}\",{:1d},\"{:12s}\",{:1d}," \
                "{:8.3f},{:8.3f},{:8.3f},{:8.3f},{:8.3f},{:8.3f}".format(*args)
 
+    @staticmethod
+    def read_from_str(data, line):
+        # type: ("NpFile", str) -> "Transformer"
+        obj = Transformer()
+        obj.load_from(data, line)
+        return obj
+
+    def load_from(self, data, line):
+        # type: ("NpFile", str) -> None
+
+        from_str, to_str, ncir, self.op, self.metering_end, \
+            r_str, x_str, tmin_str, tmax_str, pmin_str, pmax_str, \
+            ctr_type, ctr_bus, steps_str, rat_str, emg_str, \
+            pf_str, cost_str, self.date, self.cnd, series_str,\
+            self.name, env_str, self.extended_name,\
+            stt_str, tap_str, phs_str, minflow, maxflow,\
+            eminflow, emaxflow = _to_csv_list(line)
+
+        self.from_bus = data.find_bus(int(from_str))
+        self.to_bus = data.find_bus(int(to_str))
+        self.parallel_circuit_number = int(ncir)
+        ctr_bus = int(ctr_bus)
+        self.ctr_bus = data.find_bus(ctr_bus) if ctr_bus != 0 else None
+        self.control_type = int(ctr_type)
+        self.r_pct = float(r_str)
+        self.x_pct = float(x_str)
+        self.tap_min = float(tmin_str)
+        self.tap_max = float(tmax_str)
+        self.tap_steps = int(steps_str)
+        self.phase_min = float(pmin_str)
+        self.phase_max = float(pmax_str)
+        self.nominal_rating = float(rat_str)
+        self.emergency_rating = float(emg_str)
+        self.cost = float(cost_str)
+        self.series_number = int(series_str)
+        self.minflow = float(minflow)
+        self.maxflow = float(maxflow)
+        self.emergency_minflow = float(eminflow)
+        self.emergency_maxflow = float(emaxflow)
+        self.stt = int(stt_str)
+        self.tap = float(tap_str)
+        self.phase = float(phs_str)
+
 
 class EquivalentTransformer(Transformer):
     header = "EQUIVALENT_TRANSFORMER"
@@ -918,6 +989,13 @@ class EquivalentTransformer(Transformer):
 
     def __init__(self):
         super(EquivalentTransformer, self).__init__()
+
+    @staticmethod
+    def read_from_str(data, line):
+        # type: ("NpFile", str) -> "EquivalentTransformer"
+        obj = EquivalentTransformer()
+        obj.load_from(data, line)
+        return obj
 
 
 class ThreeWindingTransformer(RecordType):
@@ -986,6 +1064,40 @@ class ThreeWindingTransformer(RecordType):
                "\"{:10s}\",\"{:1s}\",{:6d}," \
                "\"{:12s}\",\"{:12s}\",\"{:12s}\"," \
                "\"{:12s}\",\"{:12s}\",".format(*args)
+
+    @staticmethod
+    def read_from_str(data, line):
+        # type: ("NpFile", str) -> "ThreeWindingTransformer"
+        obj = ThreeWindingTransformer()
+        _, _, _, mid_str, ncir, obj.op,\
+            obj.metering_end, rps_pct, xps_pct, sbaseps_mva,\
+            rst_pct, xst_pct, sbasest_mva, \
+            rpt_pct, xpt_pct, sbasept_mva, \
+            power_factor, cost_str, obj.date, obj.cnd,\
+            series_str, pri_name, sec_name, ter_name, obj.name,\
+            obj.extended_name = _to_csv_list(line)
+
+        obj.primary_transformer = data.find_transformer_by_name(
+            pri_name.strip())
+        obj.secondary_transformer = data.find_transformer_by_name(
+            sec_name.strip())
+        obj.tertiary_transformer = data.find_transformer_by_name(
+            ter_name.strip())
+        obj.middlepoint_bus = data.find_bus(int(mid_str))
+        obj.parallel_circuit_number = int(ncir)
+        obj.rps_pct = float(rps_pct)
+        obj.xps_pct = float(xps_pct)
+        obj.sbaseps_mva = float(sbaseps_mva)
+        obj.rst_pct = float(rst_pct)
+        obj.xst_pct = float(xst_pct)
+        obj.sbasest_mva = float(sbasest_mva)
+        obj.rpt_pct = float(rpt_pct)
+        obj.xpt_pct = float(xpt_pct)
+        obj.sbasept_mva = float(sbasept_mva)
+        obj.power_factor = float(power_factor)
+        obj.cost = float(cost_str)
+        obj.series_number = int(series_str)
+        return obj
 
 
 class ControlledSeriesCapacitor(RecordType):
