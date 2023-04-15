@@ -1426,12 +1426,12 @@ class AcDcConverterLcc(RecordType):
         self.control_mode = "P"
         self.flow_ac_dc = FLOW_MAX
         self.flow_dc_ac = FLOW_MAX
-        self.firing_angle_rectifier_set = 0.0
-        self.firing_angle_rectifier_min = 0.0
-        self.firing_angle_rectifier_max = 0.0
-        self.firing_angle_inverter_set = 0.0
-        self.firing_angle_inverter_min = 0.0
-        self.firing_angle_inverter_max = 0.0
+        self.rectifier_firing_angle_set = 0.0
+        self.rectifier_firing_angle_min = 0.0
+        self.rectifier_firing_angle_max = 0.0
+        self.inverter_firing_angle_set = 0.0
+        self.inverter_firing_angle_min = 0.0
+        self.inverter_firing_angle_max = 0.0
         self.ccc_capacitance = 0.0
         self.cost = 0.0
         self.date = DEFAULT_DATE
@@ -1447,24 +1447,51 @@ class AcDcConverterLcc(RecordType):
         dc_bus_number = self.dc_bus.number if self.dc_bus is not None else 0
         neutral_bus_number = self.neutral_bus.number \
             if self.neutral_bus is not None else 0
-        args = [self.number, self.op, self.metering_end,
-                ac_bus_number, dc_bus_number, neutral_bus_number,
-                self.type, self.nominal_current, self.bridges, self.xc,
-                self.vfs, self.nominal_power,
-                self.tap_min, self.tap_max, self.tap_steps,
-                self.control_mode, self.flow_ac_dc, self.flow_dc_ac,
-                self.firing_angle_rectifier_set, self.firing_angle_rectifier_min,
-                self.firing_angle_rectifier_max, self.firing_angle_inverter_set,
-                self.firing_angle_inverter_min, self.firing_angle_inverter_max,
-                self.ccc_capacitance, self.cost, self.date, self.cnd,
-                self.name, self.hzbase, self.stt, self.tap, self.setpoint, ]
-        return "{:6d},\"{:1s}\",\"{:1s}\",{:6d},{:6d},{:6d}," \
-               "\"{:1s}\",{:8.3f},{:2d},{:8.3f},{:8.3f}," \
-               "{:8.3f},{:8.3f},{:8.3f},{:3d},\"{:1s}\"," \
-               "{:8.3f},{:8.3f},{:8.3f},{:8.3f},{:8.3f}," \
-               "{:8.3f},{:8.3f},{:8.3f},{:8.3f},{:8.3f}," \
-               "\"{:10s}\",\"{:1s}\",\"{:12s}\"," \
-               "{:3d},{:1d},{:8.3f},{:8.3f}".format(*args)
+        args = {"num": self.number,
+                "op": self.op,
+                "met": self.metering_end,
+                "acb": ac_bus_number,
+                "dcb": dc_bus_number,
+                "dcbn": neutral_bus_number,
+                "type": self.type,
+                "inom": self.nominal_current,
+                "br": self.bridges,
+                "xc": self.xc,
+                "vfs": self.vfs,
+                "snom": self.nominal_power,
+                "tmin": self.tap_min,
+                "tmax": self.tap_max,
+                "tstp": self.tap_steps,
+                "ctr": self.control_mode,
+                "facdc": self.flow_ac_dc,
+                "fdcac": self.flow_dc_ac,
+                "rfirset": self.rectifier_firing_angle_set,
+                "rfirmin": self.rectifier_firing_angle_min,
+                "rfirmax": self.rectifier_firing_angle_max,
+                "ifirset": self.inverter_firing_angle_set,
+                "ifirmin": self.inverter_firing_angle_min,
+                "ifirmax": self.inverter_firing_angle_max,
+                "cccc": self.ccc_capacitance,
+                "cost": self.cost,
+                "date": self.date,
+                "cnd": self.cnd,
+                "name": self.name,
+                "hz": self.hzbase,
+                "stt": self.stt,
+                "tap": self.tap,
+                "set": self.setpoint, }
+        return "{num:6d},\"{op:1s}\",\"{met:1s}\"," \
+               "{acb:6d},{dcb:6d},{dcbn:6d}," \
+               "\"{type:1s}\",{inom:8.3f}," \
+               "{br:2d},{xc:8.3f},{vfs:8.3f}," \
+               "{snom:8.3f},{tmin:8.3f},{tmax:8.3f}," \
+               "{tstp:3d},\"{ctr:1s}\"," \
+               "{facdc:8.3f},{fdcac:8.3f}," \
+               "{rfirset:8.3f},{rfirmin:8.3f},{rfirmax:8.3f}," \
+               "{ifirset:8.3f},{ifirmin:8.3f},{ifirmax:8.3f}," \
+               "{cccc:8.3f},{cost:8.3f}," \
+               "\"{date:10s}\",\"{cnd:1s}\",\"{name:12s}\"," \
+               "{hz:3d},{stt:1d},{tap:8.3f},{set:8.3f}".format(**args)
 
     @staticmethod
     def read_from_str(data, line):
@@ -1490,12 +1517,12 @@ class AcDcConverterLcc(RecordType):
         obj.steps = int(steps)
         obj.flow_ac_dc = float(flowacdc)
         obj.flow_dc_ac = float(flowdcac)
-        obj.firing_angle_rectifier_set = float(rfirang)
-        obj.firing_angle_rectifier_min = float(rfirmin)
-        obj.firing_angle_rectifier_max = float(rfirmax)
-        obj.firing_angle_inverter_set = float(ifirang)
-        obj.firing_angle_inverter_min = float(ifirmin)
-        obj.firing_angle_inverter_max = float(ifirmax)
+        obj.rectifier_firing_angle_set = float(rfirang)
+        obj.rectifier_firing_angle_min = float(rfirmin)
+        obj.rectifier_firing_angle_max = float(rfirmax)
+        obj.inverter_firing_angle_set = float(ifirang)
+        obj.inverter_firing_angle_min = float(ifirmin)
+        obj.inverter_firing_angle_max = float(ifirmax)
         obj.ccc_capacitance = float(cccc)
         obj.cost = float(cost)
         obj.hzbase = int(hz)
@@ -1547,24 +1574,36 @@ class AcDcConverterVsc(RecordType):
             if self.neutral_bus is not None else 0
         ctr_bus_number = self.ctr_bus.number if self.ctr_bus is not None else 0
         ctr_bus_name = self.ctr_bus.name if self.ctr_bus is not None else ""
-        args = [self.number, self.op, self.metering_end,
-                ac_bus_number, dc_bus_number, neutral_bus_number,
-                self.converter_ctr_mode, self.voltage_ctr_mode,
-                self.aloss, self.bloss, self.minloss,
-                self.flow_ac_dc, self.flow_dc_ac, self.max_current,
-                self.power_factor, self.qmin, self.qmax,
-                ctr_bus_number, ctr_bus_name,
-                self.rmpct,
-                self.cost, self.date, self.cnd, self.name, self.stt,
-                self.setpoint]
-        return "{:6d},\"{:1s}\",\"{:1s}\",{:6d},{:6d},{:6d}," \
-               "\"{:1s}\",\"{:1s}\"," \
-               "{:8.3f},{:8.3f},{:8.3f}," \
-               "{:8.3f},{:8.3f},{:8.3f}," \
-               "{:8.3f},{:8.3f},{:8.3f}," \
-               "{:6d},\"{:12s}\",{:8.3f},{:8.3f}," \
-               "\"{:10s}\",\"{:1s}\",\"{:12s}\"," \
-               "{:1d},{:8.3f}".format(*args)
+        args = {"number": self.number,
+                "op": self.op,
+                "met": self.metering_end,
+                "acb": ac_bus_number,
+                "dcb": dc_bus_number,
+                "dcbn": neutral_bus_number,
+                "cctr": self.converter_ctr_mode, "vctr": self.voltage_ctr_mode,
+                "alo": self.aloss, "blo": self.bloss, "mlo": self.minloss,
+                "facdc": self.flow_ac_dc, "fdcac": self.flow_dc_ac,
+                "imax": self.max_current,
+                "pf": self.power_factor,
+                "qmin": self.qmin, "qmax": self.qmax,
+                "ctrb": ctr_bus_number,
+                "ctrbnam": ctr_bus_name,
+                "rmpct": self.rmpct,
+                "cost": self.cost,
+                "date": self.date,
+                "cnd": self.cnd,
+                "name": self.name,
+                "stt": self.stt,
+                "set": self.setpoint}
+        return "{number:6d},\"{op:1s}\",\"{met:1s}\"," \
+               "{acb:6d},{dcb:6d},{dcbn:6d}," \
+               "\"{cctr:1s}\",\"{vctr:1s}\"," \
+               "{alo:8.3f},{blo:8.3f},{mlo:8.3f}," \
+               "{facdc:8.3f},{fdcac:8.3f},{imax:8.3f}," \
+               "{pf:8.3f},{qmin:8.3f},{qmax:8.3f}," \
+               "{ctrb:6d},\"{ctrbnam:12s}\",{rmpct:8.3f},{cost:8.3f}," \
+               "\"{date:10s}\",\"{cnd:1s}\",\"{name:12s}\"," \
+               "{stt:1d},{set:8.3f}".format(**args)
 
     @staticmethod
     def read_from_str(data, line):
