@@ -699,7 +699,7 @@ class Line(RecordType):
     """Line data."""
     header = "LINE"
     comment = "# FromBus#,ToBus#,ParallelCirc#,Op,MetEnd,R%,X%,MVAr," \
-              "NomRating,EmgRating,PF,Cost,\"[..Date..]\",\"Cnd\",Serie#," \
+              "NorRating,EmgRating,PF,Cost,\"[..Date..]\",\"Cnd\",Serie#," \
               "Type,\"[...Name...]\",Env,LengthKm," \
               "Stt,\"[....Extended Name.....]\""
 
@@ -714,7 +714,7 @@ class Line(RecordType):
         self.r_pct = 0.0
         self.x_pct = 0.0
         self.mvar = 0.0
-        self.nominal_rating = FLOW_MAX
+        self.normal_rating = FLOW_MAX
         self.emergency_rating = FLOW_MAX
         self.power_factor = 0.0
         self.cost = 0.0
@@ -737,7 +737,7 @@ class Line(RecordType):
         to_bus_number = self.to_bus.number if self.to_bus is not None else 0
         args = [from_bus_number, to_bus_number,
                 self.parallel_circuit_number, self.op, self.metering_end,
-                self.r_pct, self.x_pct, self.mvar, self.nominal_rating,
+                self.r_pct, self.x_pct, self.mvar, self.normal_rating,
                 self.emergency_rating, self.power_factor, self.cost,
                 self.date, self.cnd, self.number, self.type, self.name,
                 self.env_factor, self.length_km, self.stt, self.extended_name
@@ -764,7 +764,7 @@ class Line(RecordType):
         obj.r_pct = float(r_str)
         obj.x_pct = float(x_str)
         obj.mvar_pct = float(mvar_str)
-        obj.nominal_rating = float(rat_str)
+        obj.normal_rating = float(rat_str)
         obj.emergency_rating = float(emg_str)
         obj.power_factor = float(pf_str)
         obj.cost = float(cost_str)
@@ -892,7 +892,7 @@ class Transformer(RecordType):
     header = "TRANSFORMER"
     comment = "# FromBus#,ToBus#,ParallelCirc#,\"Op\",\"MetEnd\",R%,X%," \
               "TapMin,TapMax,PhaseMin,PhaseMax,ControlType,CtrBus,TapSteps," \
-              "NomRating,EmgRating,PF,Cost,\"[..Date..]\",\"Cnd\",Series#," \
+              "NorRating,EmgRating,PF,Cost,\"[..Date..]\",\"Cnd\",Series#," \
               "\"[...Name...]\",Env,\"[...Extended Name...]\",Stt,Tap,Phase," \
               "MinFlow,MaxFlow,EmgMinFlow,EmgMaxFlow"
 
@@ -912,7 +912,7 @@ class Transformer(RecordType):
         self.control_type = 0
         self.ctr_bus = None
         self.tap_steps = 20
-        self.nominal_rating = FLOW_MAX
+        self.normal_rating = FLOW_MAX
         self.emergency_rating = FLOW_MAX
         self.power_factor = 0
         self.cost = 0
@@ -941,7 +941,7 @@ class Transformer(RecordType):
                 self.parallel_circuit_number, self.op, self.metering_end,
                 self.r_pct, self.x_pct, self.tap_min, self.tap_max,
                 self.phase_min, self.phase_max, self.control_type,
-                ctr_bus_number, self.tap_steps, self.nominal_rating,
+                ctr_bus_number, self.tap_steps, self.normal_rating,
                 self.emergency_rating, self.power_factor, self.cost,
                 self.date, self.cnd, self.series_number, self.name, self.env,
                 self.extended_name, self.stt, self.tap, self.phase,
@@ -984,7 +984,7 @@ class Transformer(RecordType):
         self.tap_steps = int(steps_str)
         self.phase_min = float(pmin_str)
         self.phase_max = float(pmax_str)
-        self.nominal_rating = float(rat_str)
+        self.normal_rating = float(rat_str)
         self.emergency_rating = float(emg_str)
         self.cost = float(cost_str)
         self.series_number = int(series_str)
@@ -1117,7 +1117,7 @@ class ThreeWindingTransformer(RecordType):
 class ControlledSeriesCapacitor(RecordType):
     header = "CSC"
     comment = "# FromBus#,ToBus#,ParallelCirc#,\"Op\",\"MetEnd\"," \
-              "Xmin%,Xmax%,NomRating,EmgRating,PF,Cost,\"[..Date..]\"," \
+              "Xmin%,Xmax%,NorRating,EmgRating,PF,Cost,\"[..Date..]\"," \
               "\"Cnd\",Series#,\"[...Name...]\",\"CM\",Stt," \
               "Bypass,Setpoint"
 
@@ -1130,7 +1130,7 @@ class ControlledSeriesCapacitor(RecordType):
         self.metering_end = METERING_END_FROM
         self.xmin_pct = 0.0
         self.xmax_pct = 0.0
-        self.nominal_rating = FLOW_MAX
+        self.normal_rating = FLOW_MAX
         self.emergency_rating = FLOW_MAX
         self.power_factor = 0.0
         self.cost = 0.0
@@ -1152,7 +1152,7 @@ class ControlledSeriesCapacitor(RecordType):
             from_bus_number, to_bus_number,
             self.parallel_circuit_number, self.op, self.metering_end,
             self.xmin_pct, self.xmax_pct,
-            self.nominal_rating, self.emergency_rating,
+            self.normal_rating, self.emergency_rating,
             self.power_factor, self.cost, self.date, self.cnd,
             self.series_number, self.name, self.control_mode, self.stt,
             self.bypass, self.setpoint
@@ -1176,7 +1176,7 @@ class ControlledSeriesCapacitor(RecordType):
         obj.parallel_circuit_number = int(ncir)
         obj.xmax_pct = float(xmax)
         obj.xmin_pct = float(xmin)
-        obj.nominal_rating = float(rat_str)
+        obj.normal_rating = float(rat_str)
         obj.emergency_rating = float(emg_str)
         obj.power_factor = float(pf_str)
         obj.cost_str = float(cost_str)
@@ -1353,7 +1353,7 @@ class DcLine(RecordType):
         self.metering_end = METERING_END_FROM
         self.r_ohm = 0.0
         self.l_ohm = 0.0
-        self.nominal_rating = FLOW_MAX
+        self.normal_rating = FLOW_MAX
         self.cost = 0.0
         self.date = DEFAULT_DATE
         self.cnd = CND_REGISTRY
@@ -1367,7 +1367,7 @@ class DcLine(RecordType):
         to_bus_number = self.to_bus.number if self.to_bus is not None else 0
         args = [from_bus_number, to_bus_number,
                 self.parallel_circuit_number, self.op, self.metering_end,
-                self.r_ohm, self.l_ohm, self.nominal_rating, self.cost,
+                self.r_ohm, self.l_ohm, self.normal_rating, self.cost,
                 self.date, self.cnd, self.series_number, self.name, self.stt]
         return "{:6d},{:6d},{:3d},\"{:1s}\",\"{:1s}\"," \
                "{:8.3f},{:8.3f},{:8.3f},{:8.3f},\"{:10s}\"," \
@@ -1386,7 +1386,7 @@ class DcLine(RecordType):
         obj.parallel_circuit_number = int(ncir)
         obj.r_ohm = float(r_str)
         obj.l_ohm = float(l_str)
-        obj.nominal_rating = float(rat_str)
+        obj.normal_rating = float(rat_str)
         obj.cost = float(cost_str)
         obj.series_number = int(series_str)
         obj.stt = int(stt_str)

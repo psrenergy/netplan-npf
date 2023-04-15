@@ -252,7 +252,7 @@ csc.from_bus = bus4
 csc.to_bus = bus5
 csc.xmin_pct = -20.0
 csc.xmax_pct = -5.0
-csc.nominal_rating = 300.0
+csc.normal_rating = 300.0
 csc.emergency_rating = 300.0
 csc.series_number = series_count
 data.cscs.append(csc)
