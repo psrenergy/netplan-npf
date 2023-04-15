@@ -59,6 +59,12 @@ def to_date_str(date):
     return date.strftime(DATE_FORMAT)
 
 
+def _empty(str_value):
+    # type: (str) -> bool
+    """Test if a string is empty."""
+    return len(str_value.strip()) == 0
+
+
 class StarpointFile:
     header = "(BusF) (...Name...) (BusT) (...Name...)"
 
@@ -769,7 +775,7 @@ class Line(RecordType):
         obj.power_factor = float(pf_str)
         obj.cost = float(cost_str)
         obj.env_factor = int(env_str)
-        obj.length_km = float(len_str)
+        obj.length_km = float(len_str) if not _empty(len_str.strip()) else 1.0
         obj.stt = int(stt_str)
         return obj
 
@@ -859,7 +865,7 @@ class LineShunt(RecordType):
 
     def __str__(self):
         circ_from_number = self.circuit.from_bus.number \
-            if self.circuit is not None else ""
+            if self.circuit is not None else 0
         circ_to_number = self.circuit.to_bus.number \
             if self.circuit is not None else 0
         circ_number = self.circuit.number if self.circuit is not None else 0
@@ -974,7 +980,7 @@ class Transformer(RecordType):
         self.from_bus = data.find_bus(int(from_str))
         self.to_bus = data.find_bus(int(to_str))
         self.parallel_circuit_number = int(ncir)
-        ctr_bus = int(ctr_bus)
+        ctr_bus = int(ctr_bus) if not _empty(ctr_bus) else 0
         self.ctr_bus = data.find_bus(ctr_bus) if ctr_bus != 0 else None
         self.control_type = int(ctr_type)
         self.r_pct = float(r_str)
@@ -982,8 +988,8 @@ class Transformer(RecordType):
         self.tap_min = float(tmin_str)
         self.tap_max = float(tmax_str)
         self.tap_steps = int(steps_str)
-        self.phase_min = float(pmin_str)
-        self.phase_max = float(pmax_str)
+        self.phase_min = float(pmin_str) if not _empty(pmin_str) else 0.0
+        self.phase_max = float(pmax_str) if not _empty(pmax_str) else 0.0
         self.normal_rating = float(rat_str)
         self.emergency_rating = float(emg_str)
         self.cost = float(cost_str)
@@ -992,9 +998,9 @@ class Transformer(RecordType):
         self.maxflow = float(maxflow)
         self.emergency_minflow = float(eminflow)
         self.emergency_maxflow = float(emaxflow)
-        self.stt = int(stt_str)
-        self.tap = float(tap_str)
-        self.phase = float(phs_str)
+        self.stt = int(stt_str) if not _empty(stt_str) else 1
+        self.tap = float(tap_str) if not _empty(tap_str) else 1.0
+        self.phase = float(phs_str) if not _empty(phs_str) else 0.0
 
 
 class EquivalentTransformer(Transformer):
@@ -1108,8 +1114,9 @@ class ThreeWindingTransformer(RecordType):
         obj.rpt_pct = float(rpt_pct)
         obj.xpt_pct = float(xpt_pct)
         obj.sbasept_mva = float(sbasept_mva)
-        obj.power_factor = float(power_factor)
-        obj.cost = float(cost_str)
+        obj.power_factor = float(power_factor) \
+            if not _empty(power_factor) else 0.0
+        obj.cost = float(cost_str) if not _empty(cost_str) else 0.0
         obj.series_number = int(series_str)
         return obj
 
@@ -1179,7 +1186,7 @@ class ControlledSeriesCapacitor(RecordType):
         obj.normal_rating = float(rat_str)
         obj.emergency_rating = float(emg_str)
         obj.power_factor = float(pf_str)
-        obj.cost_str = float(cost_str)
+        obj.cost_str = float(cost_str) if not _empty(cost_str) else 0.0
         obj.series_number = int(series_str)
         obj.stt = int(stt_str)
         obj.bypass = int(byp_str)
@@ -1240,7 +1247,7 @@ class StaticVarCompensator(RecordType):
         obj.ctr_mode = int(mode_str)
         obj.qmin = float(qmin_str)
         obj.qmax = float(qmax_str)
-        obj.cost = float(cost_str)
+        obj.cost = float(cost_str) if not _empty(cost_str) else 0.0
         obj.droop = float(droop_str)
         obj.units = int(units_str)
         obj.stt = int(stt_str)
@@ -1327,13 +1334,13 @@ class DcBus(RecordType):
             groundr, area_str, region_str, system_str, dclink_str, \
             obj.date, obj.cnd, cost_str, volt_str = _to_csv_list(line)
         obj.number = int(number_str)
-        obj.type = int(type_str)
-        obj.groundr = float(groundr)
+        obj.type = int(type_str) if not _empty(type_str) else 0
+        obj.groundr = float(groundr) if not _empty(groundr) else 0.0
         obj.area = data.find_area(int(area_str))
         obj.region = data.find_region(int(region_str))
-        obj.system = data.find_system(int(region_str))
+        obj.system = data.find_system(int(system_str))
         obj.dclink = data.find_dclink(int(dclink_str))
-        obj.cost = float(cost_str)
+        obj.cost = float(cost_str) if not _empty(cost_str) else 0.0
         obj.volt = float(volt_str)
         return obj
 
@@ -1381,13 +1388,13 @@ class DcLine(RecordType):
         from_str, to_str, ncir, obj.op, obj.metering_end,\
             r_str, l_str, rat_str, cost_str, obj.date,\
             obj.cnd, series_str, obj.name, stt_str = fodasse
-        obj.from_bus = data.find_bus(int(from_str))
-        obj.to_bus = data.find_bus(int(to_str))
+        obj.from_bus = data.find_dcbus(int(from_str))
+        obj.to_bus = data.find_dcbus(int(to_str))
         obj.parallel_circuit_number = int(ncir)
         obj.r_ohm = float(r_str)
-        obj.l_ohm = float(l_str)
+        obj.l_ohm = float(l_str) if not _empty(l_str) else 0.0
         obj.normal_rating = float(rat_str)
-        obj.cost = float(cost_str)
+        obj.cost = float(cost_str) if not _empty(cost_str) else 0.0
         obj.series_number = int(series_str)
         obj.stt = int(stt_str)
         return obj
@@ -1517,14 +1524,21 @@ class AcDcConverterLcc(RecordType):
         obj.steps = int(steps)
         obj.flow_ac_dc = float(flowacdc)
         obj.flow_dc_ac = float(flowdcac)
-        obj.rectifier_firing_angle_set = float(rfirang)
-        obj.rectifier_firing_angle_min = float(rfirmin)
-        obj.rectifier_firing_angle_max = float(rfirmax)
-        obj.inverter_firing_angle_set = float(ifirang)
-        obj.inverter_firing_angle_min = float(ifirmin)
-        obj.inverter_firing_angle_max = float(ifirmax)
+        # TODO: use better values for empty min/max.
+        obj.rectifier_firing_angle_set = float(rfirang) \
+            if not _empty(rfirang) else 0.0
+        obj.rectifier_firing_angle_min = float(rfirmin) \
+            if not _empty(rfirmin) else 0.0
+        obj.rectifier_firing_angle_max = float(rfirmax) \
+            if not _empty(rfirmax) else 0.0
+        obj.inverter_firing_angle_set = float(ifirang) \
+            if not _empty(ifirang) else 0.0
+        obj.inverter_firing_angle_min = float(ifirmin) \
+            if not _empty(ifirmin) else 0.0
+        obj.inverter_firing_angle_max = float(ifirmax) \
+            if not _empty(ifirmax) else 0.0
         obj.ccc_capacitance = float(cccc)
-        obj.cost = float(cost)
+        obj.cost = float(cost) if not _empty(cost) else 0.0
         obj.hzbase = int(hz)
         obj.stt = int(stt)
         obj.tap = float(tap)
@@ -1629,7 +1643,7 @@ class AcDcConverterVsc(RecordType):
         obj.rmpct = float(rmpct)
         obj.flow_ac_dc = float(flowacdc)
         obj.flow_dc_ac = float(flowdcac)
-        obj.cost = float(cost)
+        obj.cost = float(cost) if not _empty(cost) else 0.0
         obj.stt = int(stt)
         obj.setpoint = float(setpoint)
         return obj
