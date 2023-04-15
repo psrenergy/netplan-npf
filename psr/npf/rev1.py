@@ -145,6 +145,13 @@ class NpFile:
                 return dclink
         raise NpfException("Could not find DC link #{}".format(link_number))
 
+    def find_dcbus(self, bus_number):
+        # type: (int) -> "DcBus"
+        for bus in self.dcbuses:
+            if bus.number == bus_number:
+                return bus
+        raise NpfException("Could not find DC bus #{}".format(bus_number))
+
     def find_bus(self, bus_number):
         # type: (int) -> Union["Bus", "MiddlePointBus"]
         for bus in self.buses:
@@ -1370,9 +1377,10 @@ class DcLine(RecordType):
     def read_from_str(data, line):
         # type: ("NpFile", str) -> "DcLine"
         obj = DcLine()
+        fodasse = _to_csv_list(line)
         from_str, to_str, ncir, obj.op, obj.metering_end,\
             r_str, l_str, rat_str, cost_str, obj.date,\
-            obj.cnd, series_str, obj.name, stt_str = _to_csv_list(line)
+            obj.cnd, series_str, obj.name, stt_str = fodasse
         obj.from_bus = data.find_bus(int(from_str))
         obj.to_bus = data.find_bus(int(to_str))
         obj.parallel_circuit_number = int(ncir)
@@ -1388,7 +1396,7 @@ class DcLine(RecordType):
 class AcDcConverterLcc(RecordType):
     header = "ACDC_CONVERTER_LCC"
     comment = "# Cnv#,\"Op\",\"MetEnd\",AcBus#,DcBus#,NeutralBus#,\"Type\"," \
-              "Inom,Bridges,Xc,Vfs,Snom,Tmin,Tmax,Steps,Mode," \
+              "Inom,Bridges,Xc,Vfs,Snom,Tmin,Tmax,Steps,\"Mode\"," \
               "FlowAcDc,FlowDcAc," \
               "FirR,FirRmin,FirRmax,FirI,FirImin,FirImax,CCCC,Cost," \
               "\"[..Date..]\",\"Cnd\",\"[...Name...]\",Hz,Stt,Tap,Setpoint"
@@ -1418,9 +1426,9 @@ class AcDcConverterLcc(RecordType):
         self.control_mode = "P"
         self.flow_ac_dc = FLOW_MAX
         self.flow_dc_ac = FLOW_MAX
-        self.firing_angle_retifier_set = 0.0
-        self.firing_angle_retifier_min = 0.0
-        self.firing_angle_retifier_max = 0.0
+        self.firing_angle_rectifier_set = 0.0
+        self.firing_angle_rectifier_min = 0.0
+        self.firing_angle_rectifier_max = 0.0
         self.firing_angle_inverter_set = 0.0
         self.firing_angle_inverter_min = 0.0
         self.firing_angle_inverter_max = 0.0
@@ -1445,18 +1453,56 @@ class AcDcConverterLcc(RecordType):
                 self.vfs, self.nominal_power,
                 self.tap_min, self.tap_max, self.tap_steps,
                 self.control_mode, self.flow_ac_dc, self.flow_dc_ac,
-                self.firing_angle_retifier_set, self.firing_angle_retifier_min,
-                self.firing_angle_retifier_max, self.firing_angle_inverter_set,
+                self.firing_angle_rectifier_set, self.firing_angle_rectifier_min,
+                self.firing_angle_rectifier_max, self.firing_angle_inverter_set,
                 self.firing_angle_inverter_min, self.firing_angle_inverter_max,
                 self.ccc_capacitance, self.cost, self.date, self.cnd,
                 self.name, self.hzbase, self.stt, self.tap, self.setpoint, ]
         return "{:6d},\"{:1s}\",\"{:1s}\",{:6d},{:6d},{:6d}," \
                "\"{:1s}\",{:8.3f},{:2d},{:8.3f},{:8.3f}," \
-               "{:8.3f},{:8.3f},{:8.3f},{:8.3f},\"{:1s}\"," \
+               "{:8.3f},{:8.3f},{:8.3f},{:3d},\"{:1s}\"," \
                "{:8.3f},{:8.3f},{:8.3f},{:8.3f},{:8.3f}," \
                "{:8.3f},{:8.3f},{:8.3f},{:8.3f},{:8.3f}," \
                "\"{:10s}\",\"{:1s}\",\"{:12s}\"," \
-               "{:3d},{:8.3f},{:8.3f}".format(*args)
+               "{:3d},{:1d},{:8.3f},{:8.3f}".format(*args)
+
+    @staticmethod
+    def read_from_str(data, line):
+        # type: ("NpFile", str) -> "AcDcConverterLcc"
+        obj = AcDcConverterLcc()
+        number_str, obj.op, obj.metering_end, ac_bus, dc_bus, neutral_bus,\
+            obj.type, inom, bridges, xc, vfs, snom, tmin, tmax,\
+            steps, obj.control_mode, flowacdc, flowdcac, \
+            rfirang, rfirmin, rfirmax, ifirang, ifirmin, ifirmax, cccc, \
+            cost, obj.date, obj.cnd, obj.name, \
+            hz, stt, tap, setpoint = _to_csv_list(line)
+        obj.number = int(number_str)
+        obj.ac_bus = data.find_bus(int(ac_bus))
+        obj.dc_bus = data.find_dcbus(int(dc_bus))
+        obj.neutral_bus = data.find_dcbus(int(neutral_bus))
+        obj.nominal_current = float(inom)
+        obj.bridges = int(bridges)
+        obj.xc = float(xc)
+        obj.vfs = float(vfs)
+        obj.nominal_power = float(snom)
+        obj.tap_min = float(tmin)
+        obj.tap_max = float(tmax)
+        obj.steps = int(steps)
+        obj.flow_ac_dc = float(flowacdc)
+        obj.flow_dc_ac = float(flowdcac)
+        obj.firing_angle_rectifier_set = float(rfirang)
+        obj.firing_angle_rectifier_min = float(rfirmin)
+        obj.firing_angle_rectifier_max = float(rfirmax)
+        obj.firing_angle_inverter_set = float(ifirang)
+        obj.firing_angle_inverter_min = float(ifirmin)
+        obj.firing_angle_inverter_max = float(ifirmax)
+        obj.ccc_capacitance = float(cccc)
+        obj.cost = float(cost)
+        obj.hzbase = int(hz)
+        obj.stt = int(stt)
+        obj.tap = float(tap)
+        obj.setpoint = float(setpoint)
+        return obj
 
 
 class AcDcConverterVsc(RecordType):
@@ -1474,8 +1520,6 @@ class AcDcConverterVsc(RecordType):
         self.ac_bus = None
         self.dc_bus = None
         self.neutral_bus = None
-        self.type = ""
-        self.nominal_current = 0.0
         self.converter_ctr_mode = ""
         self.voltage_ctr_mode = ""
         self.aloss = 0.0
@@ -1504,8 +1548,7 @@ class AcDcConverterVsc(RecordType):
         ctr_bus_number = self.ctr_bus.number if self.ctr_bus is not None else 0
         ctr_bus_name = self.ctr_bus.name if self.ctr_bus is not None else ""
         args = [self.number, self.op, self.metering_end,
-                ac_bus_number, dc_bus_number, neutral_bus_number, self.type,
-                self.nominal_current,
+                ac_bus_number, dc_bus_number, neutral_bus_number,
                 self.converter_ctr_mode, self.voltage_ctr_mode,
                 self.aloss, self.bloss, self.minloss,
                 self.flow_ac_dc, self.flow_dc_ac, self.max_current,
@@ -1515,10 +1558,39 @@ class AcDcConverterVsc(RecordType):
                 self.cost, self.date, self.cnd, self.name, self.stt,
                 self.setpoint]
         return "{:6d},\"{:1s}\",\"{:1s}\",{:6d},{:6d},{:6d}," \
-               "\"{:1s}\",{:8.3f},\"{:1s}\",\"{:1s}\"," \
+               "\"{:1s}\",\"{:1s}\"," \
                "{:8.3f},{:8.3f},{:8.3f}," \
                "{:8.3f},{:8.3f},{:8.3f}," \
                "{:8.3f},{:8.3f},{:8.3f}," \
                "{:6d},\"{:12s}\",{:8.3f},{:8.3f}," \
                "\"{:10s}\",\"{:1s}\",\"{:12s}\"," \
                "{:1d},{:8.3f}".format(*args)
+
+    @staticmethod
+    def read_from_str(data, line):
+        # type: ("NpFile", str) -> "AcDcConverterVsc"
+        obj = AcDcConverterVsc()
+        number_str, obj.op, obj.metering_end, ac_bus, dc_bus, neutral_bus,\
+            obj.converter_ctr_mode, obj.voltage_ctr_mode, \
+            aloss, bloss, minloss, flowacdc, flowdcac, imax, pwf, qmin, qmax,\
+            ctr_bus, _, rmpct, cost, obj.date, obj.cnd, \
+            obj.name, stt, setpoint = _to_csv_list(line)
+        obj.number = int(number_str)
+        obj.ac_bus = data.find_bus(int(ac_bus))
+        obj.dc_bus = data.find_dcbus(int(dc_bus))
+        obj.neutral_bus = data.find_dcbus(int(neutral_bus))
+        obj.ctr_bus = data.find_bus(int(ctr_bus))
+        obj.max_current = float(imax)
+        obj.aloss = float(aloss)
+        obj.bloss = float(bloss)
+        obj.minloss = float(minloss)
+        obj.pwf = float(pwf)
+        obj.qmin = float(qmin)
+        obj.qmax = float(qmax)
+        obj.rmpct = float(rmpct)
+        obj.flow_ac_dc = float(flowacdc)
+        obj.flow_dc_ac = float(flowdcac)
+        obj.cost = float(cost)
+        obj.stt = int(stt)
+        obj.setpoint = float(setpoint)
+        return obj
