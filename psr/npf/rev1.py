@@ -1370,10 +1370,9 @@ class DcLine(RecordType):
     def read_from_str(data, line):
         # type: ("NpFile", str) -> "DcLine"
         obj = DcLine()
-        fodasse = _to_csv_list(line)
         from_str, to_str, ncir, obj.op, obj.metering_end,\
             r_str, l_str, rat_str, cost_str, obj.date,\
-            obj.cnd, series_str, obj.name, stt_str = fodasse
+            obj.cnd, series_str, obj.name, stt_str = _to_csv_list(line)
         obj.from_bus = data.find_bus(int(from_str))
         obj.to_bus = data.find_bus(int(to_str))
         obj.parallel_circuit_number = int(ncir)
