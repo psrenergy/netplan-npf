@@ -357,6 +357,11 @@ class NpFile:
                 elements.append(element_class.read_from_str(self, line))
         return elements
 
+    def save(self, file_path):
+        # type: (str) -> None
+        with open(file_path, "w") as np_file:
+            np_file.write(str(self))
+
 
 def _to_str(value):
     if isinstance(value, str):
