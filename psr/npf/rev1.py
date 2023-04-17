@@ -837,6 +837,7 @@ class BusShunt(RecordType):
         obj.number = int(number_str)
         obj.bus = data.find_bus(int(bus_str))
         obj.ctr_bus = data.find_bus(int(ctr_str))
+        obj.ctr_type = int(ctr_type_str)
         obj.units = int(units_str)
         obj.units_on = int(units_on_str)
         obj.mvar = float(mvar_str)
@@ -849,7 +850,7 @@ class LineShunt(RecordType):
     header = "LINE_SHUNT"
     comment = "# Shunt#,\"[...Name...]\",\"Op\"," \
               "FromBus#,ToBus#,ParallelCirc#,MVAr,Term,Cost," \
-              "\"[..Date..]\",\"Cnd\",Stt,Series#"
+              "\"[..Date..]\",\"Cnd\",Stt,\"[.LineName.]\""
     TERMINAL_FROM = "F"
     TERMINAL_TO = "T"
 
@@ -873,16 +874,16 @@ class LineShunt(RecordType):
             if self.circuit is not None else 0
         circ_to_number = self.circuit.to_bus.number \
             if self.circuit is not None else 0
-        circ_number = self.circuit.number if self.circuit is not None else 0
+        circ_name = self.circuit.name if self.circuit is not None else ""
         circ_parallel = self.circuit.parallel_circuit_number\
             if self.circuit is not None else 0
         args = [self.number, self.name, self.op,
                 circ_from_number, circ_to_number,
                 circ_parallel, self.mvar, self.terminal, self.cost,
-                self.date, self.cnd, self.stt, circ_number]
+                self.date, self.cnd, self.stt, circ_name]
         return "{:6d},\"{:12s}\",\"{:1s}\",{:6d},{:6d},{:2d},{:8.3f}," \
                "\"{:1s}\",{:8.3f},\"{:10s}\",\"{:1s}\"," \
-               "{:1d},{:3d}".format(*args)
+               "{:1d},\"{:12s}\"".format(*args)
 
     @staticmethod
     def read_from_str(data, line):
@@ -1503,7 +1504,7 @@ class AcDcConverterLcc(RecordType):
                "{ifirset:8.3f},{ifirmin:8.3f},{ifirmax:8.3f}," \
                "{cccc:8.3f},{cost:8.3f}," \
                "\"{date:10s}\",\"{cnd:1s}\",\"{name:12s}\"," \
-               "{hz:3d},{stt:1d},{tap:8.3f},{set:8.3f}".format(**args)
+               "{hz:3d},{stt:1d},{tap:8.4f},{set:8.3f}".format(**args)
 
     @staticmethod
     def read_from_str(data, line):
@@ -1526,7 +1527,7 @@ class AcDcConverterLcc(RecordType):
         obj.nominal_power = float(snom)
         obj.tap_min = float(tmin)
         obj.tap_max = float(tmax)
-        obj.steps = int(steps)
+        obj.tap_steps = int(steps)
         obj.flow_ac_dc = float(flowacdc)
         obj.flow_dc_ac = float(flowdcac)
         # TODO: use better values for empty min/max.
