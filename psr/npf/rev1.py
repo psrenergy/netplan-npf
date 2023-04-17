@@ -225,9 +225,7 @@ class NpFile:
              self.middlepoint_buses),
             (Demand.header, Demand.comment, self.demands),
             (Generator.header, Generator.comment, self.generators),
-            (BusShunt.header, BusShunt.comment, self.bus_shunts),
             (Line.header, Line.comment, self.lines),
-            (LineShunt.header, LineShunt.comment, self.line_shunts),
             (Transformer.header, Transformer.comment, self.transformers),
             (EquivalentTransformer.header, EquivalentTransformer.comment,
              self.equivalent_transformers),
@@ -235,6 +233,8 @@ class NpFile:
              self.three_winding_transformers),
             (ControlledSeriesCapacitor.header,
              ControlledSeriesCapacitor.comment, self.cscs),
+            (LineShunt.header, LineShunt.comment, self.line_shunts),
+            (BusShunt.header, BusShunt.comment, self.bus_shunts),
             (StaticVarCompensator.header, StaticVarCompensator.comment,
              self.svcs),
             (DcLink.header, DcLink.comment, self.dclinks),
@@ -420,7 +420,7 @@ class System(RecordType):
 
     def __str__(self):
         args = [self.id, self.name, self.number, ]
-        return "  \"{:2s}\",\"{:20s}\",{:2d}".format(*args)
+        return "  \"{:2s}\",\"{:20s}\",{:7d}".format(*args)
 
     @staticmethod
     def read_from_str(data, line):
@@ -434,7 +434,7 @@ class System(RecordType):
 class Region(RecordType):
     """Region data."""
     header = "REGION"
-    comment = "# \"[ID]\",\"[........Name......]\",Region#,System#," \
+    comment = "# [ID],\"[........Name......]\",Region#,System#," \
               "\"SystemID\""
 
     def __init__(self):
@@ -453,7 +453,7 @@ class Region(RecordType):
         system_id = self.system.id if self.system is not None else ""
         args = [self.id, self.name, self.number, system_number,
                 system_id]
-        return "  \"{:4s}\",\"{:12s}\",{:2d},{:2d},\"{:2s}\"".format(*args)
+        return "  \"{:2s}\",\"{:12s}\",{:7d},{:7d},\"{:2s}\"".format(*args)
 
     @staticmethod
     def read_from_str(data, line):
@@ -489,7 +489,7 @@ class Area(RecordType):
         system_id = self.system.id if self.system is not None else ""
         args = [self.id, self.name, self.number, system_number,
                 system_id]
-        return "  \"{:4s}\",\"{:36s}\",{:4d},{:2d},\"{:2s}\"".format(*args)
+        return "  \"{:4s}\",\"{:36s}\",{:5d},{:7d},\"{:2s}\"".format(*args)
 
     @staticmethod
     def read_from_str(data, line):
@@ -542,7 +542,7 @@ class Bus(RecordType):
                 self.vmax, self.vmin, self.evmax, self.evmin, self.stt,
                 self.extended_name]
         return "{:6d},\"{:12s}\",\"{:1s}\",{:8.2f},{:2d},{:2d},{:2d}," \
-               "\"{:10s}\",\"{:1s}\",{:7.2f},{:1d},{:1d},{:8.3f},{:8.3f}," \
+               "\"{:10s}\",\"{:1s}\",{:7.2f},{:1d},{:1d},{:8.4f},{:8.4f}," \
                "{:8.3f},{:8.3f},{:8.3f},{:8.3f},{:1d},\"{:12s}\"".format(*args)
 
     @staticmethod
