@@ -30,14 +30,14 @@ data.systems.append(system)
 
 area1 = psr.npf.Area()
 area1.number = 1
-area1.name = "Generation Area"
+area1.name = "Area 1"
 area1.id = "ar01"
 area1.system = system
 data.areas.append(area1)
 
 area2 = psr.npf.Area()
 area2.number = 2
-area2.name = "Transmission Area"
+area2.name = "Area 2"
 area2.id = "ar02"
 area2.system = system
 data.areas.append(area2)
@@ -413,4 +413,8 @@ vsc_cnv_inv.ctr_bus = bus4
 data.vsc_converters.append(vsc_cnv_inv)
 
 
+print("NPF file contents:")
+print("------------------")
 print(data)
+
+data.save("example_basic_usage.npf")
