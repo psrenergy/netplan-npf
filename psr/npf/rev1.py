@@ -48,6 +48,11 @@ STATUS_OFF = 0
 # Absolute maximum value of circuit flow.
 FLOW_MAX = 9999.0
 
+# Transformer control type
+XFMR_FIXED_TAP_ANGLE = 1
+XFMR_FIXED_TAP_VAR_ANGLE = 2
+XFMR_VAR_TAP_FIXED_ANGLE = 3
+XFMR_VAR_TAP_ANGLE = 4
 
 class NpfException(Exception):
     pass
@@ -543,7 +548,7 @@ class Bus(RecordType):
                 self.extended_name]
         return "{:6d},\"{:12s}\",\"{:1s}\",{:8.2f},{:2d},{:2d},{:2d}," \
                "\"{:10s}\",\"{:1s}\",{:7.2f},{:1d},{:1d},{:8.4f},{:8.4f}," \
-               "{:8.3f},{:8.3f},{:8.3f},{:8.3f},{:1d},\"{:12s}\"".format(*args)
+               "{:8.3f},{:8.3f},{:8.3f},{:8.3f},{:1d},\"{:24s}\"".format(*args)
 
     @staticmethod
     def read_from_str(data, line):
@@ -714,6 +719,11 @@ class Line(RecordType):
               "Type,\"[...Name...]\",Env,LengthKm," \
               "Stt,\"[....Extended Name.....]\""
 
+    LTYPE_LINE = 0
+    LTYPE_JUMPER = 1
+    LTYPE_BREAKER = 2
+    LTYPE_SWITCH = 3
+
     def __init__(self):
         super(Line, self).__init__()
         self.from_bus = None
@@ -732,9 +742,7 @@ class Line(RecordType):
         self.date = DEFAULT_DATE
         self.cnd = CND_REGISTRY
         self.number = 0
-        # circuit type
-        # TODO: create enumeration for different types.
-        self.type = 0
+        self.type = self.LTYPE_LINE
         self.name = ""
         # environment factor (0/1)
         self.env_factor = 0
@@ -1041,6 +1049,7 @@ class ThreeWindingTransformer(RecordType):
         self.middlepoint_bus = None
         self.parallel_circuit_number = 1
         self.op = OP_ADD
+        # TODO: this doesn't make sense for 3w transformers
         self.metering_end = METERING_END_FROM
         self.rps_pct = 0
         self.xps_pct = 0
@@ -1058,6 +1067,22 @@ class ThreeWindingTransformer(RecordType):
         self.series_number = 0
         self.name = ""
         self.extended_name = ""
+
+    def from_bus_number(self) -> int:
+        return self.primary_transformer.from_bus.number \
+            if self.primary_transformer is not None else 0
+
+    def to_bus_number(self) -> int:
+        return self.primary_transformer.to_bus.number \
+            if self.primary_transformer is not None else 0
+
+    def middlepoint_bus_number(self) -> int:
+        return self.middlepoint_bus.number \
+            if self.middlepoint_bus is not None else 0
+
+    def tertiary_bus_number(self) -> int:
+        return self.tertiary_transformer.to_bus.number \
+            if self.tertiary_transformer is not None else 0
 
     def __str__(self):
         primary_bus_number = self.primary_transformer.from_bus.number \
@@ -1370,7 +1395,7 @@ class DcLine(RecordType):
         self.cost = 0.0
         self.date = DEFAULT_DATE
         self.cnd = CND_REGISTRY
-        self.series_number = 0
+        self.number = 0
         self.name = ""
         self.stt = STATUS_ON
 
@@ -1381,7 +1406,7 @@ class DcLine(RecordType):
         args = [from_bus_number, to_bus_number,
                 self.parallel_circuit_number, self.op, self.metering_end,
                 self.r_ohm, self.l_ohm, self.normal_rating, self.cost,
-                self.date, self.cnd, self.series_number, self.name, self.stt]
+                self.date, self.cnd, self.number, self.name, self.stt]
         return "{:6d},{:6d},{:3d},\"{:1s}\",\"{:1s}\"," \
                "{:8.3f},{:8.3f},{:8.3f},{:8.3f},\"{:10s}\"," \
                "\"{:1s}\",{:6d},\"{:24s}\",{:1d}".format(*args)
