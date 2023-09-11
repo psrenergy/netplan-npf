@@ -78,20 +78,18 @@ class StarpointFile:
 
     def __str__(self):
         contents = [StarpointFile.header, ]
-        for starpoint in self.starpoints:
+        for ibus, starpoint in enumerate(self.starpoints):
             contents.append("{:6d} {:12s} {:6d} {:12s}".format(
-                starpoint.bus_from, starpoint.bus_from_name,
-                starpoint.bus_to, starpoint.bus_to_name
+                starpoint.bus_number, starpoint.bus_name,
+                ibus + 1, starpoint.bus_name
             ))
         return "\n".join(contents)
 
 
 class Starpoint:
     def __init__(self):
-        self.bus_from = 0
-        self.bus_from_name = ""
-        self.bus_to = 0
-        self.bus_to_name = ""
+        self.bus_number = 0
+        self.bus_name = ""
 
 
 class NpFile:
