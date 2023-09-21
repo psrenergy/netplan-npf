@@ -1157,6 +1157,9 @@ class ControlledSeriesCapacitor(RecordType):
               "\"Cnd\",Series#,\"[...Name...]\",\"CM\",Stt," \
               "Bypass,Setpoint"
 
+    CONTROL_MODE_FIXED_X = 0
+    CONTROL_MODE_POWER = 1
+
     def __init__(self):
         super(ControlledSeriesCapacitor, self).__init__()
         self.from_bus = None
@@ -1174,7 +1177,7 @@ class ControlledSeriesCapacitor(RecordType):
         self.cnd = CND_REGISTRY
         self.series_number = 0
         self.name = ""
-        self.control_mode = ""
+        self.control_mode = self.CONTROL_MODE_FIXED_X
         self.stt = STATUS_ON
         self.bypass = STATUS_OFF
         self.setpoint = 0.0
@@ -1195,7 +1198,7 @@ class ControlledSeriesCapacitor(RecordType):
         ]
         return "{:6d},{:6d},{:3d},\"{:1s}\",\"{:1s}\"," \
                "{:8.3f},{:8.3f},{:8.3f},{:8.3f},{:8.3f},{:8.3f}," \
-               "\"{:10s}\",\"{:1s}\",{:6d},\"{:12s}\",\"{:1s}\",{:1d}," \
+               "\"{:10s}\",\"{:1s}\",{:6d},\"{:12s}\",{:1d},{:1d}," \
                "{:1d},{:8.3f}".format(*args)
 
     @staticmethod
