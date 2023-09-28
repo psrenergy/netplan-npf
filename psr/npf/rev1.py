@@ -1232,6 +1232,7 @@ class StaticVarCompensator(RecordType):
     comment = "# SVC#,\"[...Name...]\",\"Op\",Bus#,\"[.Bus Name.]\",CtrBus," \
               "\"[.Ctr Name.]\",Droop,CtrMode,Units,Qmin,Qmax,Cost," \
               "\"[..Date..]\",\"Cnd\",Stt,SetMVAR"
+    MODE_POWER = 1
 
     def __init__(self):
         super(StaticVarCompensator, self).__init__()
@@ -1241,7 +1242,7 @@ class StaticVarCompensator(RecordType):
         self.bus = None
         self.ctr_bus = None
         self.droop = 0.0
-        self.ctr_mode = 0
+        self.ctr_mode = self.MODE_POWER
         self.units = 1
         self.qmin = 0
         self.qmax = 0
