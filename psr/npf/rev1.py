@@ -1112,7 +1112,7 @@ class ThreeWindingTransformer(RecordType):
                "{:8.3f},{:8.3f},{:8.3f},{:8.3f},{:8.3f}," \
                "\"{:10s}\",\"{:1s}\",{:6d}," \
                "\"{:12s}\",\"{:12s}\",\"{:12s}\"," \
-               "\"{:12s}\",\"{:12s}\",".format(*args)
+               "\"{:12s}\",\"{:12s}\"".format(*args)
 
     @staticmethod
     def read_from_str(data, line):
