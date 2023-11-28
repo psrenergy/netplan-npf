@@ -337,7 +337,7 @@ lcc_cnv_ret.name = "LCC RET"
 lcc_cnv_ret.ac_bus = bus3
 lcc_cnv_ret.dc_bus = lcc_bus1
 lcc_cnv_ret.neutral_bus = lcc_bus3
-lcc_cnv_ret.type = psr.npf.AcDcConverterLcc.TYPE_RETIFIER
+lcc_cnv_ret.type = psr.npf.AcDcConverterLcc.TYPE_RECTIFIER
 data.lcc_converters.append(lcc_cnv_ret)
 
 lcc_cnv_inv = psr.npf.AcDcConverterLcc()

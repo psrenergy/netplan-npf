@@ -407,6 +407,20 @@ class RecordType(object):
         return RecordType()
 
 
+class SeriesType(RecordType):
+    def __init__(self):
+        super(SeriesType, self).__init__()
+        self.from_bus = None
+        self.to_bus = None
+        self.parallel_circuit_number = 1
+
+    def from_bus_number(self) -> int:
+        return self.from_bus.number if self.from_bus is not None else 0
+
+    def to_bus_number(self) -> int:
+        return self.to_bus.number if self.to_bus is not None else 0
+
+
 class System(RecordType):
     """System data."""
     header = "SYSTEM"
@@ -709,7 +723,7 @@ class Generator(RecordType):
         return obj
 
 
-class Line(RecordType):
+class Line(SeriesType):
     """Line data."""
     header = "LINE"
     comment = "# FromBus#,ToBus#,ParallelCirc#,Op,MetEnd,R%,X%,MVAr," \
@@ -724,9 +738,6 @@ class Line(RecordType):
 
     def __init__(self):
         super(Line, self).__init__()
-        self.from_bus = None
-        self.to_bus = None
-        self.parallel_circuit_number = 1
         self.op = OP_ADD
         # Metering end: (F)rom or (T)o bus.
         self.metering_end = METERING_END_FROM
@@ -905,7 +916,7 @@ class LineShunt(RecordType):
         return obj
 
 
-class Transformer(RecordType):
+class Transformer(SeriesType):
     """Two-winding transformer data."""
     header = "TRANSFORMER"
     comment = "# FromBus#,ToBus#,ParallelCirc#,\"Op\",\"MetEnd\",R%,X%," \
@@ -916,9 +927,6 @@ class Transformer(RecordType):
 
     def __init__(self):
         super(Transformer, self).__init__()
-        self.from_bus = None
-        self.to_bus = None
-        self.parallel_circuit_number = 1
         self.op = OP_ADD
         self.metering_end = METERING_END_FROM
         self.r_pct = 0
@@ -1378,7 +1386,7 @@ class DcBus(RecordType):
         return obj
 
 
-class DcLine(RecordType):
+class DcLine(SeriesType):
     header = "DC_LINE"
     comment = "# FromBus#,ToBus#,ParallelCirc#,\"Op\",\"MetEnd\"," \
               "R_Ohm,L_Ohm,NominalRating,Cost,\"[..Date..]\",Cnd,Series#," \
@@ -1386,9 +1394,6 @@ class DcLine(RecordType):
 
     def __init__(self):
         super(DcLine, self).__init__()
-        self.from_bus = None
-        self.to_bus = None
-        self.parallel_circuit_number = 1
         self.op = OP_ADD
         self.metering_end = METERING_END_FROM
         self.r_ohm = 0.0
@@ -1433,7 +1438,24 @@ class DcLine(RecordType):
         return obj
 
 
-class AcDcConverterLcc(RecordType):
+class AcDcConverter(RecordType):
+    def __init__(self):
+        super(AcDcConverter, self).__init__()
+        self.ac_bus = None
+        self.dc_bus = None
+        self.neutral_bus = None
+
+    def ac_bus_number(self):
+        return self.ac_bus.number if self.ac_bus is not None else 0
+
+    def dc_bus_number(self):
+        return self.dc_bus.number if self.dc_bus is not None else 0
+
+    def neutral_bus_number(self):
+        return self.neutral_bus.number if self.neutral_bus is not None else 0
+
+
+class AcDcConverterLcc(AcDcConverter):
     header = "ACDC_CONVERTER_LCC"
     comment = "# Cnv#,\"Op\",\"MetEnd\",AcBus#,DcBus#,NeutralBus#,\"Type\"," \
               "Inom,Bridges,Xc,Vfs,Snom,Tmin,Tmax,Steps,\"Mode\"," \
@@ -1441,7 +1463,7 @@ class AcDcConverterLcc(RecordType):
               "FirR,FirRmin,FirRmax,FirI,FirImin,FirImax,CCCC,Cost," \
               "\"[..Date..]\",\"Cnd\",\"[...Name...]\",Hz,Stt,Tap,Setpoint"
 
-    TYPE_RETIFIER = "R"
+    TYPE_RECTIFIER = "R"
     TYPE_INVERTER = "I"
     TYPE_BIDIRECTIONAL = "B"
 
@@ -1450,11 +1472,8 @@ class AcDcConverterLcc(RecordType):
         self.number = 0
         self.op = OP_ADD
         self.metering_end = METERING_END_FROM
-        self.ac_bus = None
-        self.dc_bus = None
-        self.neutral_bus = None
         # Type: (R)etifier or (I)nverter
-        self.type = AcDcConverterLcc.TYPE_RETIFIER
+        self.type = AcDcConverterLcc.TYPE_RECTIFIER
         self.nominal_current = 0.0
         self.bridges = 2
         self.xc = 0.0
@@ -1579,7 +1598,7 @@ class AcDcConverterLcc(RecordType):
         return obj
 
 
-class AcDcConverterVsc(RecordType):
+class AcDcConverterVsc(AcDcConverter):
     header = "ACDC_CONVERTER_VSC"
     comment = "# Cnv#,\"Op\",\"MetEnd\",AcBus#,DcBus#,NeutralBus#," \
               "\"CnvMode\",\"VoltMode\",Aloss,Bloss,Minloss,FlowAcDc," \
@@ -1591,9 +1610,6 @@ class AcDcConverterVsc(RecordType):
         self.number = 0
         self.op = OP_ADD
         self.metering_end = METERING_END_FROM
-        self.ac_bus = None
-        self.dc_bus = None
-        self.neutral_bus = None
         self.converter_ctr_mode = ""
         self.voltage_ctr_mode = ""
         self.aloss = 0.0
