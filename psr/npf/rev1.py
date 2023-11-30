@@ -70,28 +70,6 @@ def _empty(str_value):
     return len(str_value.strip()) == 0
 
 
-class StarpointFile:
-    header = "(BusF) (...Name...) (BusT) (...Name...)"
-
-    def __init__(self):
-        self.starpoints = []
-
-    def __str__(self):
-        contents = [StarpointFile.header, ]
-        for ibus, starpoint in enumerate(self.starpoints):
-            contents.append("{:6d} {:12s} {:6d} {:12s}".format(
-                starpoint.bus_number, starpoint.bus_name,
-                ibus + 1, starpoint.bus_name
-            ))
-        return "\n".join(contents)
-
-
-class Starpoint:
-    def __init__(self):
-        self.bus_number = 0
-        self.bus_name = ""
-
-
 class NpFile:
     """Represents a study stage/block data."""
     def __init__(self):
