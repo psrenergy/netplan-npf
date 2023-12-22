@@ -710,9 +710,9 @@ class Line(SeriesType):
               "Stt,\"[....Extended Name.....]\""
 
     LTYPE_LINE = 0
-    LTYPE_JUMPER = 1
-    LTYPE_BREAKER = 2
-    LTYPE_SWITCH = 3
+    LTYPE_JUMPER = -1
+    LTYPE_BREAKER = -2
+    LTYPE_SWITCH = -3
 
     def __init__(self):
         super(Line, self).__init__()
