@@ -1087,7 +1087,7 @@ class ThreeWindingTransformer(RecordType):
                 tertiary_bus_number, middlepoint_bus_number,
                 self.parallel_circuit_number, self.op, self.metering_end,
                 self.rps_pct, self.xps_pct, self.sbaseps_mva,
-                self.rst_pct, self.xps_pct, self.sbaseps_mva,
+                self.rst_pct, self.xst_pct, self.sbasest_mva,
                 self.rpt_pct, self.xpt_pct, self.sbasept_mva,
                 self.power_factor, self.cost, self.date, self.cnd,
                 self.series_number, primary_name, secondary_name,
