@@ -638,6 +638,8 @@ class Generator(RecordType):
     TYPE_HYDRO = "H"
     TYPE_THERMAL = "T"
     TYPE_RENEWABLE = "R"
+    TYPE_SYNC = "S"
+    TYPE_STATCOM = "V"
 
     def __init__(self):
         super(Generator, self).__init__()
