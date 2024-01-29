@@ -658,7 +658,7 @@ class Generator(RecordType):
         self.cnd = CND_REGISTRY
         self.ctr_bus = None
         self.ctr_type = 0
-        self.factor = 0.0
+        self.power_factor = 1.0
         self.units_on = 1
         self.pgen = 0.0
         self.qgen = 0.0
@@ -672,7 +672,7 @@ class Generator(RecordType):
                 self.type, self.units, self.pmin, self.pmax,
                 self.qmin, self.qmax, self.date, self.cnd,
                 ctr_bus_number, ctr_bus_name, self.ctr_type,
-                self.factor, self.units_on, self.pgen, self.qgen]
+                self.power_factor, self.units_on, self.pgen, self.qgen]
         return "{:6d},\"{:12s}\",\"{:1s}\",{:6d},\"{:12s}\"," \
                "\"{:1s}\",{:3d},{:8.3f},{:8.3f},{:8.3f},{:8.3f}," \
                "\"{:10s}\",\"{:1s}\",{:6d},\"{:12s}\",{:1d}," \
@@ -693,7 +693,7 @@ class Generator(RecordType):
         obj.units = int(units_str)
         obj.units_on = int(units_on_str)
         obj.ctr_type = int(units_str)
-        obj.factor = float(factor_str)
+        obj.power_factor = float(factor_str)
         obj.pmax = float(pmax_str)
         obj.pmin = float(pmin_str)
         obj.qmax = float(qmax_str)
