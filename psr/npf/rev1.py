@@ -730,7 +730,7 @@ class Line(SeriesType):
         self.cost = 0.0
         self.date = DEFAULT_DATE
         self.cnd = CND_REGISTRY
-        self.number = 0
+        self.series_number = 0
         self.type = self.LTYPE_LINE
         self.name = ""
         # environment factor (0/1)
@@ -747,7 +747,7 @@ class Line(SeriesType):
                 self.parallel_circuit_number, self.op, self.metering_end,
                 self.r_pct, self.x_pct, self.mvar, self.normal_rating,
                 self.emergency_rating, self.power_factor, self.cost,
-                self.date, self.cnd, self.number, self.type, self.name,
+                self.date, self.cnd, self.series_number, self.type, self.name,
                 self.env_factor, self.length_km, self.stt, self.extended_name
                 ]
         return "{:6d},{:6d},{:3d},\"{:1s}\",\"{:1s}\"," \
