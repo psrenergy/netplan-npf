@@ -1138,7 +1138,7 @@ class ThreeWindingTransformer(RecordType):
         return obj
 
 
-class ControlledSeriesCapacitor(RecordType):
+class ControlledSeriesCapacitor(SeriesType):
     header = "CSC"
     comment = "# FromBus#,ToBus#,ParallelCirc#,\"Op\",\"MetEnd\"," \
               "Xmin%,Xmax%,NorRating,EmgRating,PF,Cost,\"[..Date..]\"," \
