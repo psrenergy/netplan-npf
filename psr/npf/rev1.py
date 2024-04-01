@@ -1138,7 +1138,7 @@ class ThreeWindingTransformer(RecordType):
         return obj
 
 
-class ControlledSeriesCapacitor(RecordType):
+class ControlledSeriesCapacitor(SeriesType):
     header = "CSC"
     comment = "# FromBus#,ToBus#,ParallelCirc#,\"Op\",\"MetEnd\"," \
               "Xmin%,Xmax%,NorRating,EmgRating,PF,Cost,\"[..Date..]\"," \
@@ -1382,7 +1382,7 @@ class DcLine(SeriesType):
         self.cost = 0.0
         self.date = DEFAULT_DATE
         self.cnd = CND_REGISTRY
-        self.number = 0
+        self.series_number = 0
         self.name = ""
         self.stt = STATUS_ON
 
@@ -1393,7 +1393,7 @@ class DcLine(SeriesType):
         args = [from_bus_number, to_bus_number,
                 self.parallel_circuit_number, self.op, self.metering_end,
                 self.r_ohm, self.l_ohm, self.normal_rating, self.cost,
-                self.date, self.cnd, self.number, self.name, self.stt]
+                self.date, self.cnd, self.series_number, self.name, self.stt]
         return "{:6d},{:6d},{:3d},\"{:1s}\",\"{:1s}\"," \
                "{:8.3f},{:8.3f},{:8.3f},{:8.3f},\"{:10s}\"," \
                "\"{:1s}\",{:6d},\"{:24s}\",{:1d}".format(*args)
