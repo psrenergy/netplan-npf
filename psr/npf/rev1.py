@@ -723,7 +723,7 @@ class Line(SeriesType):
         self.metering_end = METERING_END_FROM
         self.r_pct = 0.0
         self.x_pct = 0.0
-        self.mvar = 0.0
+        self.mvar_pct = 0.0
         self.normal_rating = FLOW_MAX
         self.emergency_rating = FLOW_MAX
         self.power_factor = 0.0
@@ -745,7 +745,7 @@ class Line(SeriesType):
         to_bus_number = self.to_bus.number if self.to_bus is not None else 0
         args = [from_bus_number, to_bus_number,
                 self.parallel_circuit_number, self.op, self.metering_end,
-                self.r_pct, self.x_pct, self.mvar, self.normal_rating,
+                self.r_pct, self.x_pct, self.mvar_pct, self.normal_rating,
                 self.emergency_rating, self.power_factor, self.cost,
                 self.date, self.cnd, self.series_number, self.type, self.name,
                 self.env_factor, self.length_km, self.stt, self.extended_name
