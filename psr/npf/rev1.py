@@ -80,7 +80,8 @@ def _empty(str_value):
 class NpFile:
     """Represents a study stage/block data."""
     def __init__(self):
-
+        # Custom data associated with the file.
+        self.tag = None
         # File format revision number.
         self.revision = 1
 
@@ -372,7 +373,8 @@ class RecordType(object):
     comment = ""
 
     def __init__(self):
-        pass
+        # Custom data associated with the element.
+        self.tag = None
 
     def __str__(self):
         values = []
