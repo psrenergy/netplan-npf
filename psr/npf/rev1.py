@@ -34,6 +34,13 @@ METERING_END_FROM = "F"
 # Circuit metering end on "to" bus.
 METERING_END_TO = "T"
 
+# Three winding transformer metering end is primary bus.
+METERING_END_PRIMARY = 1
+# Three winding transformer metering end is secondary bus.
+METERING_END_SECONDARY = 2
+# Three winding transformer metering end is tertiary bus.
+METERING_END_TERTIARY = 3
+
 # Default date
 DEFAULT_DATE = "1900/01/01"
 
@@ -1036,7 +1043,7 @@ class ThreeWindingTransformer(RecordType):
         self.parallel_circuit_number = 1
         self.op = OP_ADD
         # TODO: this doesn't make sense for 3w transformers
-        self.metering_end = METERING_END_FROM
+        self.metering_end = METERING_END_PRIMARY
         self.rps_pct = 0
         self.xps_pct = 0
         self.sbaseps_mva = 0
@@ -1461,7 +1468,7 @@ class AcDcConverterLcc(AcDcConverter):
         self.nominal_power = 0.0
         self.tap_min = 0.8
         self.tap_max = 1.2
-        self.tap_steps = 100
+        self.tap_steps = 99
         self.control_mode = "P"
         self.flow_ac_dc = FLOW_MAX
         self.flow_dc_ac = FLOW_MAX
