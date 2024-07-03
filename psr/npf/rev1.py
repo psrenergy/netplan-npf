@@ -511,7 +511,7 @@ class Bus(RecordType):
     header = "BUS"
     comment = "# Bus#,\"[...Name...]\",\"Op\",[.kV.],Area#,Region#,System#," \
               "\"[..Date..]\",\"Cnd\",Cost,Type,LoadShed,Volt,Angle,Vmax," \
-              "Vmin,EVmax,EVmin,Stt,\"[....Extended Name.....]\""
+              "Vmin,EVmax,EVmin,Stt"
 
     def __init__(self):
         super(Bus, self).__init__()
@@ -534,7 +534,6 @@ class Bus(RecordType):
         self.evmax = 1.2
         self.evmin = 0.8
         self.stt = STATUS_ON
-        self.extended_name = ""
 
     def __str__(self):
         system_number = self.system.number if self.system is not None else 0
@@ -543,11 +542,10 @@ class Bus(RecordType):
         args = [self.number, self.name, self.op, self.kvbase, area_number,
                 region_number, system_number, self.date, self.cnd,
                 self.cost, self.type, self.loadshed, self.volt, self.angle,
-                self.vmax, self.vmin, self.evmax, self.evmin, self.stt,
-                self.extended_name]
+                self.vmax, self.vmin, self.evmax, self.evmin, self.stt]
         return "{:6d},\"{:12s}\",\"{:1s}\",{:8.2f},{:2d},{:2d},{:2d}," \
                "\"{:10s}\",\"{:1s}\",{:7.2f},{:1d},{:1d},{:8.4f},{:8.4f}," \
-               "{:8.3f},{:8.3f},{:8.3f},{:8.3f},{:1d},\"{:24s}\"".format(*args)
+               "{:8.3f},{:8.3f},{:8.3f},{:8.3f},{:1d}".format(*args)
 
     @staticmethod
     def read_from_str(data, line):
@@ -562,7 +560,7 @@ class Bus(RecordType):
         number_str, self.name, self.op, kv_str, area_str, region_str,\
             system_str, self.date, self.cnd, cost_str, type_str, lds_str,\
             volt_str, angle_str, vmax_str, vmin_str, evmax_str, evmin_str,\
-            stt_str, self.extended_name = _to_csv_list(line)
+            stt_str = _to_csv_list(line)
 
         self.number = int(number_str)
         self.system = data.find_system(int(system_str))
@@ -718,7 +716,7 @@ class Line(SeriesType):
     comment = "# FromBus#,ToBus#,ParallelCirc#,Op,MetEnd,R%,X%,MVAr," \
               "NorRating,EmgRating,PF,Cost,\"[..Date..]\",\"Cnd\",Serie#," \
               "Type,\"[...Name...]\",Env,LengthKm," \
-              "Stt,\"[....Extended Name.....]\""
+              "Stt"
 
     LTYPE_LINE = 0
     LTYPE_JUMPER = -1
@@ -746,7 +744,6 @@ class Line(SeriesType):
         self.env_factor = 0
         self.length_km = 0
         self.stt = STATUS_ON
-        self.extended_name = ""
 
     def __str__(self):
         from_bus_number = self.from_bus.number \
@@ -757,12 +754,11 @@ class Line(SeriesType):
                 self.r_pct, self.x_pct, self.mvar, self.normal_rating,
                 self.emergency_rating, self.power_factor, self.cost,
                 self.date, self.cnd, self.series_number, self.type, self.name,
-                self.env_factor, self.length_km, self.stt, self.extended_name
-                ]
+                self.env_factor, self.length_km, self.stt]
         return "{:6d},{:6d},{:3d},\"{:1s}\",\"{:1s}\"," \
                "{:8.3f},{:8.3f},{:8.3f},{:8.3f},{:8.3f}," \
                "{:8.3f},{:8.3f},\"{:10s}\",\"{:1s}\",{:6d}," \
-               "{:1d},\"{:12s}\",{:1d},{:8.3f},{:1d},\"{:12s}\"".format(*args)
+               "{:1d},\"{:12s}\",{:1d},{:8.3f},{:1d}".format(*args)
 
     @staticmethod
     def read_from_str(data, line):
@@ -771,8 +767,7 @@ class Line(SeriesType):
         from_number, to_number, ncir, obj.op, obj.metering_end,\
             r_str, x_str, mvar_str, rat_str, emg_str, pf_str, \
             cost_str, obj.date, obj.cnd, series_str, type_str, \
-            obj.name, env_str, len_str, stt_str, \
-            obj.extended_name = _to_csv_list(line)
+            obj.name, env_str, len_str, stt_str = _to_csv_list(line)
         obj.series_number = int(series_str)
         obj.from_bus = data.find_bus(int(from_number))
         obj.to_bus = data.find_bus(int(to_number))
@@ -911,7 +906,7 @@ class Transformer(SeriesType):
     comment = "# FromBus#,ToBus#,ParallelCirc#,\"Op\",\"MetEnd\",R%,X%," \
               "TapMin,TapMax,PhaseMin,PhaseMax,ControlType,CtrBus,TapSteps," \
               "NorRating,EmgRating,PF,Cost,\"[..Date..]\",\"Cnd\",Series#," \
-              "\"[...Name...]\",Env,\"[...Extended Name...]\",Stt,Tap,Phase," \
+              "\"[...Name...]\",Env,Stt,Tap,Phase," \
               "MinFlow,MaxFlow,EmgMinFlow,EmgMaxFlow"
 
     def __init__(self):
@@ -936,7 +931,6 @@ class Transformer(SeriesType):
         self.series_number = 0
         self.name = ""
         self.env = 0
-        self.extended_name = ""
         self.stt = STATUS_ON
         self.tap = 1.0
         self.phase = 0.0
@@ -959,13 +953,13 @@ class Transformer(SeriesType):
                 ctr_bus_number, self.tap_steps, self.normal_rating,
                 self.emergency_rating, self.power_factor, self.cost,
                 self.date, self.cnd, self.series_number, self.name, self.env,
-                self.extended_name, self.stt, self.tap, self.phase,
+                self.stt, self.tap, self.phase,
                 self.minflow, self.maxflow, self.emergency_minflow,
                 self.emergency_maxflow, ]
         return "{:6d},{:6d},{:3d},\"{:1s}\",\"{:1s}\",{:8.3f},{:8.3f}," \
                "{:8.3f},{:8.3f},{:8.3f},{:8.3f},{:1d},{:6d},{:3d}," \
                "{:8.3f},{:8.3f},{:8.3f},{:8.3f},\"{:10s}\",\"{:1s}\"," \
-               "{:6d},\"{:12s}\",{:1d},\"{:12s}\",{:1d}," \
+               "{:6d},\"{:12s}\",{:1d},{:1d}," \
                "{:8.3f},{:8.3f},{:8.3f},{:8.3f},{:8.3f},{:8.3f}".format(*args)
 
     @staticmethod
@@ -982,8 +976,7 @@ class Transformer(SeriesType):
             r_str, x_str, tmin_str, tmax_str, pmin_str, pmax_str, \
             ctr_type, ctr_bus, steps_str, rat_str, emg_str, \
             pf_str, cost_str, self.date, self.cnd, series_str,\
-            self.name, env_str, self.extended_name,\
-            stt_str, tap_str, phs_str, minflow, maxflow,\
+            self.name, env_str, stt_str, tap_str, phs_str, minflow, maxflow,\
             eminflow, emaxflow = _to_csv_list(line)
 
         self.from_bus = data.find_bus(int(from_str))
@@ -1034,7 +1027,7 @@ class ThreeWindingTransformer(RecordType):
               "ParallelCirc#,\"Op\",\"MetEnd\",RPS%,XPS%,SbPS," \
               "RST%,XST%,SbST,RPT%,XPT%,SbPT,PF,Cost,\"[..Date..]\",\"Cnd\"," \
               "Series#,\"PriEqvTrfName\",\"SecEqvTrfName\"," \
-              "\"TerEqvTrfname\",\"[...Name...]\",\"[...Extended Name...]\""
+              "\"TerEqvTrfname\",\"[...Name...]\""
 
     def __init__(self):
         super(ThreeWindingTransformer, self).__init__()
@@ -1061,7 +1054,6 @@ class ThreeWindingTransformer(RecordType):
         self.cnd = CND_REGISTRY
         self.series_number = 0
         self.name = ""
-        self.extended_name = ""
 
     def from_bus_number(self) -> int:
         return self.primary_transformer.from_bus.number \
@@ -1102,14 +1094,14 @@ class ThreeWindingTransformer(RecordType):
                 self.rpt_pct, self.xpt_pct, self.sbasept_mva,
                 self.power_factor, self.cost, self.date, self.cnd,
                 self.series_number, primary_name, secondary_name,
-                tertiary_name, self.name, self.extended_name]
+                tertiary_name, self.name]
         return "{:6d},{:6d},{:6d},{:6d},{:2d},\"{:1s}\",\"{:1s}\"," \
                "{:8.3f},{:8.3f},{:8.3f}," \
                "{:8.3f},{:8.3f},{:8.3f}," \
                "{:8.3f},{:8.3f},{:8.3f},{:8.3f},{:8.3f}," \
                "\"{:10s}\",\"{:1s}\",{:6d}," \
                "\"{:12s}\",\"{:12s}\",\"{:12s}\"," \
-               "\"{:12s}\",\"{:12s}\"".format(*args)
+               "\"{:12s}\"".format(*args)
 
     @staticmethod
     def read_from_str(data, line):
@@ -1120,8 +1112,7 @@ class ThreeWindingTransformer(RecordType):
             rst_pct, xst_pct, sbasest_mva, \
             rpt_pct, xpt_pct, sbasept_mva, \
             power_factor, cost_str, obj.date, obj.cnd,\
-            series_str, pri_name, sec_name, ter_name, obj.name,\
-            obj.extended_name = _to_csv_list(line)
+            series_str, pri_name, sec_name, ter_name, obj.name = _to_csv_list(line)
 
         obj.primary_transformer = data.find_transformer_by_name(
             pri_name.strip())
