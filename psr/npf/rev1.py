@@ -2,6 +2,7 @@ import csv
 import datetime
 import io
 import sys
+from typing import Optional
 
 
 _IS_PY2 = sys.version_info[0] == 2
@@ -522,7 +523,7 @@ class Owner(RecordType):
         self.name = ""
 
     def __str__(self):
-        return "{:6d},\"{:12s}\"".format(self.number, self.name)
+        return "{:6d},\"{:s}\"".format(self.number, self.name)
 
     @staticmethod
     def read_from_str(data, line):
@@ -532,6 +533,50 @@ class Owner(RecordType):
         obj.number = int(number_str)
         return obj
 
+
+class Ownership(RecordType):
+    """Owner data."""
+    header = "OWNERSHIP"
+    comment = "# Owner#,ElementType#,Element#,System#,Share"
+
+    def __init__(self):
+        super(Ownership, self).__init__()
+        self.owner: Optional[Owner] = None
+        self.element: Optional[RecordType] = None
+        self.system: Optional[System] = None
+        self.share = 1.0
+        self.tag = None
+
+    def __str__(self):
+        system_code_str = "" if self.system is None else f"{self.system.number}"
+        element = self.element
+        if isinstance(element, Bus):
+            element_type = 4
+        elif isinstance(element, Line):
+            element_type = 8
+        elif isinstance(element, Transformer):
+            element_type = 9
+        elif isinstance(element, Generator):
+            element_type = 13
+        elif isinstance(element, Demand):
+            element_type = 14
+        elif isinstance(element, ThreeWindingTransformer):
+            element_type = 80
+        else:
+            element_type = 0
+        return "{:8d},{:12d},{:8d},{:7d},{:.4f}".format(self.owner.number,
+                                                         element_type,
+                                                         self.element.number,
+                                                         system_code_str,
+                                                         self.share)
+
+    @staticmethod
+    def read_from_str(data, line):
+        # type: ("NpFile", str) -> "Owner"
+        obj = Owner()
+        number_str, obj.name = _to_csv_list(line)
+        obj.number = int(number_str)
+        return obj
 
 class Bus(RecordType):
     """Bus data."""
