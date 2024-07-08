@@ -94,6 +94,8 @@ class NpFile:
         self.areas = []
         self.regions = []
         self.systems = []
+        self.owners = []
+        self.ownerships = []
         self.demands = []
         self.generators = []
         self.bus_shunts = []
@@ -274,6 +276,9 @@ class NpFile:
                 elif line == "REGION":
                     regions = data._parse_until_end(Region, data_file)
                     data.regions.extend(regions)
+                elif line == "OWNER":
+                    owners = data._parse_until_end(Owner, data_file)
+                    data.owners.extend(owners)
                 elif line == "SYSTEM":
                     systems = data._parse_until_end(System, data_file)
                     data.systems.extend(systems)
@@ -503,6 +508,28 @@ class Area(RecordType):
             system_id = _to_csv_list(line)
         obj.number = int(number_str)
         obj.system = data.find_system(int(system_number_str))
+        return obj
+
+
+class Owner(RecordType):
+    """Owner data."""
+    header = "OWNER"
+    comment = "# Owner#,\"[...Name...]\""
+
+    def __init__(self):
+        super(Owner, self).__init__()
+        self.number = 0
+        self.name = ""
+
+    def __str__(self):
+        return "{:6d},\"{:12s}\"".format(self.number, self.name)
+
+    @staticmethod
+    def read_from_str(data, line):
+        # type: ("NpFile", str) -> "Owner"
+        obj = Owner()
+        number_str, obj.name = _to_csv_list(line)
+        obj.number = int(number_str)
         return obj
 
 
