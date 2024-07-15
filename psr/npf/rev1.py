@@ -1132,15 +1132,15 @@ class ThreeWindingTransformer(RecordType):
             if self.primary_transformer is not None else 0
 
     def to_bus_number(self) -> int:
-        return self.primary_transformer.to_bus.number \
-            if self.primary_transformer is not None else 0
+        return self.secondary_transformer.from_bus.number \
+            if self.secondary_transformer is not None else 0
 
     def middlepoint_bus_number(self) -> int:
         return self.middlepoint_bus.number \
             if self.middlepoint_bus is not None else 0
 
     def tertiary_bus_number(self) -> int:
-        return self.tertiary_transformer.to_bus.number \
+        return self.tertiary_transformer.from_bus.number \
             if self.tertiary_transformer is not None else 0
 
     def __str__(self):
