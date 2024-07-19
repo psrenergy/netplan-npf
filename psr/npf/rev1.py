@@ -36,11 +36,11 @@ METERING_END_FROM = "F"
 METERING_END_TO = "T"
 
 # Three winding transformer metering end is primary bus.
-METERING_END_PRIMARY = "P"
+METERING_END_PRIMARY = "1"
 # Three winding transformer metering end is secondary bus.
-METERING_END_SECONDARY = "S"
+METERING_END_SECONDARY = "2"
 # Three winding transformer metering end is tertiary bus.
-METERING_END_TERTIARY = "T"
+METERING_END_TERTIARY = "3"
 
 # Default date
 DEFAULT_DATE = "1900/01/01"
