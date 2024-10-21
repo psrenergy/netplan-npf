@@ -649,6 +649,7 @@ class Bus(RecordType):
         self.evmax = float(evmax_str)
         self.evmin = float(evmin_str)
         self.stt = int(stt_str)
+        self.tag = self.number
 
 
 class MiddlePointBus(Bus):
@@ -704,6 +705,7 @@ class Demand(RecordType):
         obj.units = int(units_str)
         obj.p_mw = float(p_str)
         obj.q_mw = float(q_str)
+        obj.tag = obj.number
         return obj
 
 
@@ -779,6 +781,7 @@ class Generator(RecordType):
         obj.qmin = float(qmin_str)
         obj.pgen = float(pgen_str)
         obj.qgen = float(qgen_str)
+        obj.tag = obj.number
         return obj
 
 
@@ -855,6 +858,7 @@ class Line(SeriesType):
         obj.env_factor = int(env_str)
         obj.length_km = float(len_str) if not _empty(len_str.strip()) else 1.0
         obj.stt = int(stt_str)
+        obj.tag = obj.series_number
         return obj
 
 
