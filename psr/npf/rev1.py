@@ -632,7 +632,7 @@ class Bus(RecordType):
         number_str, self.name, self.op, kv_str, area_str, region_str,\
             system_str, self.date, self.cnd, cost_str, type_str, lds_str,\
             volt_str, angle_str, vmax_str, vmin_str, evmax_str, evmin_str,\
-            stt_str, name = _to_csv_list(line)
+            stt_str = _to_csv_list(line)
 
         self.number = int(number_str)
         self.system = data.find_system(int(system_str))
@@ -839,7 +839,7 @@ class Line(SeriesType):
         from_number, to_number, ncir, obj.op, obj.metering_end,\
             r_str, x_str, mvar_str, rat_str, emg_str, pf_str, \
             cost_str, obj.date, obj.cnd, series_str, type_str, \
-            obj.name, env_str, len_str, stt_str, name = _to_csv_list(line)
+            obj.name, env_str, len_str, stt_str = _to_csv_list(line)
         obj.series_number = int(series_str)
         obj.from_bus = data.find_bus(int(from_number))
         obj.to_bus = data.find_bus(int(to_number))
@@ -1048,7 +1048,7 @@ class Transformer(SeriesType):
             r_str, x_str, tmin_str, tmax_str, pmin_str, pmax_str, \
             ctr_type, ctr_bus, steps_str, rat_str, emg_str, \
             pf_str, cost_str, self.date, self.cnd, series_str,\
-            self.name, env_str, _, stt_str, tap_str, phs_str, minflow, maxflow,\
+            self.name, env_str, stt_str, tap_str, phs_str, minflow, maxflow,\
             eminflow, emaxflow = _to_csv_list(line)
 
         self.from_bus = data.find_bus(int(from_str))
@@ -1184,7 +1184,7 @@ class ThreeWindingTransformer(RecordType):
             rst_pct, xst_pct, sbasest_mva, \
             rpt_pct, xpt_pct, sbasept_mva, \
             power_factor, cost_str, obj.date, obj.cnd,\
-            series_str, pri_name, sec_name, ter_name, obj.name, _ = _to_csv_list(line)
+            series_str, pri_name, sec_name, ter_name, obj.name = _to_csv_list(line)
 
         obj.primary_transformer = data.find_transformer_by_name(
             pri_name.strip())
