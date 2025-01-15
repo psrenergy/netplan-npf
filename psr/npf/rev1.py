@@ -743,6 +743,7 @@ class Generator(RecordType):
         self.units_on = 1
         self.pgen = 0.0
         self.qgen = 0.0
+        self.tag = None
 
     def __str__(self):
         bus_number = self.bus.number if self.bus is not None else 0
@@ -888,6 +889,7 @@ class BusShunt(RecordType):
         self.date = DEFAULT_DATE
         self.cnd = CND_REGISTRY
         self.units_on = 1
+        self.tag = self.number
 
     def __str__(self):
         bus_number = self.bus.number if self.bus is not None else 0
@@ -919,6 +921,7 @@ class BusShunt(RecordType):
         obj.units_on = int(units_on_str)
         obj.mvar = float(mvar_str)
         obj.cost = float(cost_str)
+        obj.tag = obj.number
         return obj
 
 
