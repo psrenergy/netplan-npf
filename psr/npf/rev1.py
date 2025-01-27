@@ -424,6 +424,8 @@ class System(RecordType):
         self.name = ""
         # Unique system number.
         self.number = 0
+        # Unique system tag
+        self.tag: Optional[str] = None
 
     def __str__(self):
         args = [self.id, self.name, self.number, ]
@@ -674,7 +676,7 @@ class Demand(RecordType):
         self.number = 0
         self.name = ""
         self.op = OP_ADD
-        self.bus = None
+        self.bus: Optional[Bus] = None
         self.units = 1
         self.date = DEFAULT_DATE
         self.cnd = CND_REGISTRY
