@@ -114,6 +114,7 @@ class NpFile:
         self.dclines = []
         self.lcc_converters = []
         self.vsc_converters = []
+        self.two_terminal_dc_links: List[TwoTerminalDCLink] = []
 
     def find_system(self, system_number):
         # type: (int) -> "System"
@@ -236,6 +237,8 @@ class NpFile:
              self.lcc_converters),
             (AcDcConverterVsc.header, AcDcConverterVsc.comment,
              self.vsc_converters),
+            (TwoTerminalDCLink.header,
+             TwoTerminalDCLink.comment, self.two_terminal_dc_links),
         )
 
         for header, comment, elements in header_elements_pairs:
@@ -335,6 +338,10 @@ class NpFile:
                     converters = data._parse_until_end(AcDcConverterVsc,
                                                        data_file)
                     data.vsc_converters.extend(converters)
+                elif line == "TWO_TERMINAL_DC_LINK":
+                    dclinks = data._parse_until_end(TwoTerminalDCLink,
+                                                       data_file)
+                    data.two_terminal_dc_links.extend(dclinks)
                 else:
                     raise NpfException("Could not parse line:\n{}".format(line))
         return data
@@ -1283,6 +1290,68 @@ class ControlledSeriesCapacitor(SeriesType):
         obj.stt = int(stt_str)
         obj.bypass = int(byp_str)
         obj.setpoint = float(set_str)
+        return obj
+
+
+class TwoTerminalDCLink(SeriesType):
+    header = "TWO_TERMINAL_DC_LINK"
+    comment = "# FromBus#,ToBus#,ParallelCirc#,\"Op\",FlowFromTo," \
+              "FlowToFrom,Resistance,QuadraticLosses,Cost,\"[..Date..]\"," \
+              "\"Cnd\",Series#,\"[...Name...]\",Stt"
+
+    def __init__(self):
+        super(TwoTerminalDCLink, self).__init__()
+        self.from_bus = None
+        self.to_bus = None
+        self.parallel_circuit_number = 1
+        self.op = OP_ADD
+        self.flow_from_to = FLOW_MAX
+        self.flow_to_from = FLOW_MAX
+        self.resistance = 0.0
+        self.quadratic_losses = 0
+        self.cost = 0.0
+        self.date = DEFAULT_DATE
+        self.cnd = CND_REGISTRY
+        self.series_number = 0
+        self.name = ""
+        self.stt = STATUS_ON
+
+    def __str__(self):
+        from_bus_number = self.from_bus.number \
+            if self.from_bus is not None else 0
+        to_bus_number = self.to_bus.number if self.to_bus is not None else 0
+
+        args = [
+            from_bus_number, to_bus_number,
+            self.parallel_circuit_number, self.op,
+            self.flow_from_to, self.flow_to_from,
+            self.resistance, self.quadratic_losses,
+            self.cost, self.date, self.cnd,
+            self.series_number, self.name, self.stt,
+        ]
+        return "{:6d},{:6d},{:3d},\"{:1s}\"," \
+               "{:8.3f},{:8.3f},{:8.3f},{:1d},{:8.3f}," \
+               "\"{:10s}\",\"{:1s}\",{:6d},\"{:12s}\",{:1d},".format(*args)
+
+    @staticmethod
+    def read_from_str(data, line):
+        # type: ("NpFile", str) -> "TwoTerminalDCLink"
+        obj = TwoTerminalDCLink()
+        from_bus, to_bus, ncir, obj.op,\
+            flow_from_to, flow_to_from, resistance, quad_losses, cost_str, \
+            obj.date, obj.cnd, series_str, obj.name, \
+            stt_str = _to_csv_list(line)
+
+        obj.from_bus = data.find_bus(int(from_bus))
+        obj.to_bus = data.find_bus(int(to_bus))
+        obj.parallel_circuit_number = int(ncir)
+        obj.flow_from_to = float(flow_from_to)
+        obj.flow_to_from = float(flow_to_from)
+        obj.resistance = float(resistance)
+        obj.quadratic_losses = float(quad_losses)
+        obj.cost_str = float(cost_str) if not _empty(cost_str) else 0.0
+        obj.series_number = int(series_str)
+        obj.stt = int(stt_str)
         return obj
 
 
