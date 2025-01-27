@@ -1103,10 +1103,10 @@ class ThreeWindingTransformer(RecordType):
 
     def __init__(self):
         super(ThreeWindingTransformer, self).__init__()
-        self.primary_transformer = None
-        self.secondary_transformer = None
-        self.tertiary_transformer = None
-        self.middlepoint_bus = None
+        self.primary_transformer: Optional[EquivalentTransformer] = None
+        self.secondary_transformer: Optional[EquivalentTransformer] = None
+        self.tertiary_transformer: Optional[EquivalentTransformer] = None
+        self.middlepoint_bus: Optional[MiddlePointBus] = None
         self.parallel_circuit_number = 1
         self.op = OP_ADD
         # TODO: this doesn't make sense for 3w transformers
