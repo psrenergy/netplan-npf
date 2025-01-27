@@ -2,7 +2,7 @@ import csv
 import datetime
 import io
 import sys
-from typing import Optional
+from typing import Optional, List, Union, Any, TextIO, Type
 
 
 _IS_PY2 = sys.version_info[0] == 2
@@ -82,77 +82,71 @@ class NpFile:
     """Represents a study stage/block data."""
     def __init__(self):
         # Custom data associated with the file.
-        self.tag = None
+        self.tag: Optional[Any] = None
         # File format revision number.
-        self.revision = 1
+        self.revision: int = 1
 
         # Case title/description.
-        self.description = ""
-        self.buses = []
+        self.description: str = ""
+        self.buses: List[Bus] = []
         # Buses that represents the fictitious middle point of
         #  three-winding transformers.
-        self.middlepoint_buses = []
-        self.areas = []
-        self.regions = []
-        self.systems = []
-        self.owners = []
-        self.ownerships = []
-        self.demands = []
-        self.generators = []
-        self.bus_shunts = []
-        self.lines = []
-        self.line_shunts = []
-        self.transformers = []
-        self.equivalent_transformers = []
-        self.three_winding_transformers = []
+        self.middlepoint_buses: List[MiddlePointBus] = []
+        self.areas: List[Area] = []
+        self.regions: List[Region] = []
+        self.systems: List[System] = []
+        self.owners: List[Owner] = []
+        self.ownerships: List[Ownership] = []
+        self.demands: List[Demand] = []
+        self.generators: List[Generator] = []
+        self.bus_shunts: List[BusShunt] = []
+        self.lines: List[Line] = []
+        self.line_shunts: List[LineShunt] = []
+        self.transformers: List[Transformer] = []
+        self.equivalent_transformers: List[EquivalentTransformer] = []
+        self.three_winding_transformers: List[ThreeWindingTransformer] = []
         # Controlled series capacitors.
-        self.cscs = []
+        self.cscs: List[ControlledSeriesCapacitor] = []
         # Static VAR compensators.
-        self.svcs = []
-        self.dclinks = []
-        self.dcbuses = []
-        self.dclines = []
-        self.lcc_converters = []
-        self.vsc_converters = []
+        self.svcs: List[StaticVarCompensator] = []
+        self.dclinks: List[DcLink] = []
+        self.dcbuses: List[DcBus] = []
+        self.dclines: List[DcLine] = []
+        self.lcc_converters: List[AcDcConverterLcc] = []
+        self.vsc_converters: List[AcDcConverterVsc] = []
         self.two_terminal_dc_links: List[TwoTerminalDCLink] = []
 
-    def find_system(self, system_number):
-        # type: (int) -> "System"
+    def find_system(self, system_number: int) -> "System":
         for system in self.systems:
             if system.number == system_number:
                 return system
         raise NpfException("Could not find system #{}".format(system_number))
 
-    def find_region(self, region_number):
-        # type: (int) -> "Region"
+    def find_region(self, region_number: int) -> "Region":
         for region in self.regions:
             if region.number == region_number:
                 return region
         raise NpfException("Could not find region #{}".format(region_number))
 
-    def find_area(self, area_number):
-        # type: (int) -> "Area"
+    def find_area(self, area_number: int) -> "Area":
         for area in self.areas:
             if area.number == area_number:
                 return area
         raise NpfException("Could not find area #{}".format(area_number))
 
-    def find_dclink(self, link_number):
-        # type: (int) -> "DcLink"
+    def find_dclink(self, link_number: int) -> "DcLink":
         for dclink in self.dclinks:
             if dclink.number == link_number:
                 return dclink
         raise NpfException("Could not find DC link #{}".format(link_number))
 
-    def find_dcbus(self, bus_number):
-        # type: (int) -> "DcBus"
+    def find_dcbus(self, bus_number: int) -> "DcBus":
         for bus in self.dcbuses:
             if bus.number == bus_number:
                 return bus
         raise NpfException("Could not find DC bus #{}".format(bus_number))
 
-    def find_bus(self, bus_number):
-        # type: (int) -> Union["Bus", "MiddlePointBus"]
+    def find_bus(self, bus_number: int) -> Union["Bus", "MiddlePointBus"]:
         for bus in self.buses:
             if bus.number == bus_number:
                 return bus
@@ -161,17 +155,15 @@ class NpFile:
                 return bus
         raise NpfException("Could not find bus #{}".format(bus_number))
 
-    def find_line(self, from_bus, to_bus, ncir):
-        # type: (int, int, int) -> "Line"
+    def find_line(self, from_bus: int, to_bus: int, ncir: int) -> Optional["Line"]:
         for line in self.lines:
             if line.from_bus.number == from_bus and \
                     line.to_bus.number == to_bus and \
                     line.parallel_circuit_number == ncir:
                 return line
 
-    def find_transformer(self, from_bus, to_bus, ncir):
-        # type: (int, int, int) -> Union["Transformer","EquivalentTransformer"]
-        for transformer in self.transformer:
+    def find_transformer(self, from_bus: int, to_bus: int, ncir: int) -> Union["Transformer","EquivalentTransformer"]:
+        for transformer in self.transformers:
             if transformer.from_bus.number == from_bus and \
                     transformer.to_bus.number == to_bus and \
                     transformer.parallel_circuit_number == ncir:
@@ -185,8 +177,7 @@ class NpFile:
                            "to bus #{} #{}"
                            .format(from_bus, to_bus, ncir))
 
-    def find_transformer_by_name(self, name):
-        # type: (str) -> Union["Transformer","EquivalentTransformer"]
+    def find_transformer_by_name(self, name: str) -> Union["Transformer","EquivalentTransformer"]:
         for transformer in self.transformers:
             if transformer.name.strip() == name:
                 return transformer
@@ -197,8 +188,7 @@ class NpFile:
                            .format(name))
 
     @staticmethod
-    def _append_elements(contents, header, comment, elements):
-        # type: (list, str, str, list) -> None
+    def _append_elements(contents: List[str], header: str, comment: str, elements: List[Any]) -> None:
         contents.append(header)
         contents.append(comment)
         for element in elements:
@@ -346,8 +336,8 @@ class NpFile:
                     raise NpfException("Could not parse line:\n{}".format(line))
         return data
 
-    def _parse_until_end(self, element_class, data_file):
-        elements = []
+    def _parse_until_end(self, element_class: Type[Any], data_file: TextIO) -> List[Any]:
+        elements: List[Any] = []
         while True:
             original_line = data_file.readline()
             line = original_line.strip()
@@ -410,9 +400,9 @@ class RecordType(object):
 class SeriesType(RecordType):
     def __init__(self):
         super(SeriesType, self).__init__()
-        self.from_bus = None
-        self.to_bus = None
-        self.parallel_circuit_number = 1
+        self.from_bus: Optional[Union[Bus, DcBus]] = None
+        self.to_bus: Optional[Union[Bus, DcBus]] = None
+        self.parallel_circuit_number: int = 1
 
     def from_bus_number(self) -> int:
         return self.from_bus.number if self.from_bus is not None else 0
@@ -804,25 +794,25 @@ class Line(SeriesType):
 
     def __init__(self):
         super(Line, self).__init__()
-        self.op = OP_ADD
+        self.op: str = OP_ADD
         # Metering end: (F)rom or (T)o bus.
-        self.metering_end = METERING_END_FROM
-        self.r_pct = 0.0
-        self.x_pct = 0.0
-        self.mvar = 0.0
-        self.normal_rating = FLOW_MAX
-        self.emergency_rating = FLOW_MAX
-        self.power_factor = 0.0
-        self.cost = 0.0
-        self.date = DEFAULT_DATE
-        self.cnd = CND_REGISTRY
-        self.series_number = 0
-        self.type = self.LTYPE_LINE
-        self.name = ""
+        self.metering_end: str = METERING_END_FROM
+        self.r_pct: float = 0.0
+        self.x_pct: float = 0.0
+        self.mvar: float = 0.0
+        self.normal_rating: float = FLOW_MAX
+        self.emergency_rating: float = FLOW_MAX
+        self.power_factor: float = 0.0
+        self.cost: float = 0.0
+        self.date: str = DEFAULT_DATE
+        self.cnd: str = CND_REGISTRY
+        self.series_number: int = 0
+        self.type: int = self.LTYPE_LINE
+        self.name: str = ""
         # environment factor (0/1)
-        self.env_factor = 0
-        self.length_km = 0
-        self.stt = STATUS_ON
+        self.env_factor: int = 0
+        self.length_km: float = 0
+        self.stt: int = STATUS_ON
 
     def __str__(self):
         from_bus_number = self.from_bus.number \
@@ -877,20 +867,20 @@ class BusShunt(RecordType):
 
     def __init__(self):
         super(BusShunt, self).__init__()
-        self.number = 0
-        self.name = ""
-        self.op = OP_ADD
-        self.bus = None
-        self.ctr_bus = None
-        self.type = BusShunt.REACTOR
+        self.number: int = 0
+        self.name: str = ""
+        self.op: str = OP_ADD
+        self.bus: Optional[Bus] = None
+        self.ctr_bus: Optional[Bus] = None
+        self.type: str = BusShunt.REACTOR
         # TODO: create enumeration for control types.
-        self.ctr_type = 0
-        self.units = 1
-        self.mvar = 0.0
-        self.cost = 0.0
-        self.date = DEFAULT_DATE
-        self.cnd = CND_REGISTRY
-        self.units_on = 1
+        self.ctr_type: int = 0
+        self.units: int = 1
+        self.mvar: float = 0.0
+        self.cost: float = 0.0
+        self.date: str = DEFAULT_DATE
+        self.cnd: str = CND_REGISTRY
+        self.units_on: int = 1
 
     def __str__(self):
         bus_number = self.bus.number if self.bus is not None else 0
@@ -936,18 +926,18 @@ class LineShunt(RecordType):
 
     def __init__(self):
         super(LineShunt, self).__init__()
-        self.number = 0
-        self.name = ""
-        self.op = OP_ADD
-        self.circuit = None
-        self.mvar = 0.0
+        self.number: int = 0
+        self.name: str = ""
+        self.op: str = OP_ADD
+        self.circuit: Optional[Line] = None
+        self.mvar: float = 0.0
         # Connection terminal: (F)rom bus or (T)o bus.
-        self.terminal = LineShunt.TERMINAL_FROM
+        self.terminal: str = LineShunt.TERMINAL_FROM
         # Cost per unit in k$.
-        self.cost = 0.0
-        self.date = DEFAULT_DATE
-        self.cnd = CND_REGISTRY
-        self.stt = STATUS_ON
+        self.cost: float = 0.0
+        self.date: str = DEFAULT_DATE
+        self.cnd: str = CND_REGISTRY
+        self.stt: int = STATUS_ON
 
     def __str__(self):
         circ_from_number = self.circuit.from_bus.number \
@@ -990,33 +980,33 @@ class Transformer(SeriesType):
 
     def __init__(self):
         super(Transformer, self).__init__()
-        self.op = OP_ADD
-        self.metering_end = METERING_END_FROM
-        self.r_pct = 0
-        self.x_pct = 0
-        self.tap_min = 0.8
-        self.tap_max = 1.2
-        self.phase_min = 0.0
-        self.phase_max = 0.0
-        self.control_type = 0
-        self.ctr_bus = None
-        self.tap_steps = 20
-        self.normal_rating = FLOW_MAX
-        self.emergency_rating = FLOW_MAX
-        self.power_factor = 0
-        self.cost = 0
-        self.date = DEFAULT_DATE
-        self.cnd = CND_REGISTRY
-        self.series_number = 0
-        self.name = ""
-        self.env = 0
-        self.stt = STATUS_ON
-        self.tap = 1.0
-        self.phase = 0.0
-        self.minflow = -FLOW_MAX
-        self.maxflow = +FLOW_MAX
-        self.emergency_minflow = -FLOW_MAX
-        self.emergency_maxflow = +FLOW_MAX
+        self.op: str = OP_ADD
+        self.metering_end: str = METERING_END_FROM
+        self.r_pct: float = 0
+        self.x_pct: float = 0
+        self.tap_min: float = 0.8
+        self.tap_max: float = 1.2
+        self.phase_min: float = 0.0
+        self.phase_max: float = 0.0
+        self.control_type: int = 0
+        self.ctr_bus: Optional[Bus] = None
+        self.tap_steps: int = 20
+        self.normal_rating: float = FLOW_MAX
+        self.emergency_rating: float = FLOW_MAX
+        self.power_factor: float = 0
+        self.cost: float = 0
+        self.date: str = DEFAULT_DATE
+        self.cnd: str = CND_REGISTRY
+        self.series_number: int = 0
+        self.name: str = ""
+        self.env: int = 0
+        self.stt: int = STATUS_ON
+        self.tap: float = 1.0
+        self.phase: float = 0.0
+        self.minflow: float = -FLOW_MAX
+        self.maxflow: float = +FLOW_MAX
+        self.emergency_minflow: float = -FLOW_MAX
+        self.emergency_maxflow: float = +FLOW_MAX
 
     def __str__(self):
         from_bus_number = self.from_bus.number \
@@ -1114,25 +1104,24 @@ class ThreeWindingTransformer(RecordType):
         self.secondary_transformer: Optional[EquivalentTransformer] = None
         self.tertiary_transformer: Optional[EquivalentTransformer] = None
         self.middlepoint_bus: Optional[MiddlePointBus] = None
-        self.parallel_circuit_number = 1
-        self.op = OP_ADD
-        # TODO: this doesn't make sense for 3w transformers
-        self.metering_end = METERING_END_PRIMARY
-        self.rps_pct = 0
-        self.xps_pct = 0
-        self.sbaseps_mva = 0
-        self.rst_pct = 0
-        self.xst_pct = 0
-        self.sbasest_mva = 0
-        self.rpt_pct = 0
-        self.xpt_pct = 0
-        self.sbasept_mva = 0
-        self.power_factor = 0
-        self.cost = 0
-        self.date = DEFAULT_DATE
-        self.cnd = CND_REGISTRY
-        self.series_number = 0
-        self.name = ""
+        self.parallel_circuit_number: int = 1
+        self.op: str = OP_ADD
+        self.metering_end: str = METERING_END_PRIMARY
+        self.rps_pct: float = 0
+        self.xps_pct: float = 0
+        self.sbaseps_mva: float = 0
+        self.rst_pct: float = 0
+        self.xst_pct: float = 0
+        self.sbasest_mva: float = 0
+        self.rpt_pct: float = 0
+        self.xpt_pct: float = 0
+        self.sbasept_mva: float = 0
+        self.power_factor: float = 0
+        self.cost: float = 0
+        self.date: str = DEFAULT_DATE
+        self.cnd: str = CND_REGISTRY
+        self.series_number: int = 0
+        self.name: str = ""
 
     def from_bus_number(self) -> int:
         return self.primary_transformer.from_bus.number \
@@ -1229,25 +1218,25 @@ class ControlledSeriesCapacitor(SeriesType):
 
     def __init__(self):
         super(ControlledSeriesCapacitor, self).__init__()
-        self.from_bus = None
-        self.to_bus = None
-        self.parallel_circuit_number = 1
-        self.op = OP_ADD
-        self.metering_end = METERING_END_FROM
-        self.xmin_pct = 0.0
-        self.xmax_pct = 0.0
-        self.normal_rating = FLOW_MAX
-        self.emergency_rating = FLOW_MAX
-        self.power_factor = 0.0
-        self.cost = 0.0
-        self.date = DEFAULT_DATE
-        self.cnd = CND_REGISTRY
-        self.series_number = 0
-        self.name = ""
-        self.control_mode = self.CONTROL_MODE_FIXED_X
-        self.stt = STATUS_ON
-        self.bypass = STATUS_OFF
-        self.setpoint = 0.0
+        self.from_bus: Optional[Bus] = None
+        self.to_bus: Optional[Bus] = None
+        self.parallel_circuit_number: int = 1
+        self.op: str = OP_ADD
+        self.metering_end: str = METERING_END_FROM
+        self.xmin_pct: float = 0.0
+        self.xmax_pct: float = 0.0
+        self.normal_rating: float = FLOW_MAX
+        self.emergency_rating: float = FLOW_MAX
+        self.power_factor: float = 0.0
+        self.cost: float = 0.0
+        self.date: str = DEFAULT_DATE
+        self.cnd: str = CND_REGISTRY
+        self.series_number: int = 0
+        self.name: str = ""
+        self.control_mode: int = self.CONTROL_MODE_FIXED_X
+        self.stt: int = STATUS_ON
+        self.bypass: int = STATUS_OFF
+        self.setpoint: float = 0.0
 
     def __str__(self):
         from_bus_number = self.from_bus.number \
@@ -1301,20 +1290,20 @@ class TwoTerminalDCLink(SeriesType):
 
     def __init__(self):
         super(TwoTerminalDCLink, self).__init__()
-        self.from_bus = None
-        self.to_bus = None
-        self.parallel_circuit_number = 1
-        self.op = OP_ADD
-        self.flow_from_to = FLOW_MAX
-        self.flow_to_from = FLOW_MAX
-        self.resistance = 0.0
-        self.quadratic_losses = 0
-        self.cost = 0.0
-        self.date = DEFAULT_DATE
-        self.cnd = CND_REGISTRY
-        self.series_number = 0
-        self.name = ""
-        self.stt = STATUS_ON
+        self.from_bus: Optional[Bus] = None
+        self.to_bus: Optional[Bus] = None
+        self.parallel_circuit_number: int = 1
+        self.op: str = OP_ADD
+        self.flow_from_to: float = FLOW_MAX
+        self.flow_to_from: float = FLOW_MAX
+        self.resistance: float = 0.0
+        self.quadratic_losses: int = 0
+        self.cost: float = 0.0
+        self.date: str = DEFAULT_DATE
+        self.cnd: str = CND_REGISTRY
+        self.series_number: int = 0
+        self.name: str = ""
+        self.stt: int = STATUS_ON
 
     def __str__(self):
         from_bus_number = self.from_bus.number \
@@ -1365,21 +1354,21 @@ class StaticVarCompensator(RecordType):
 
     def __init__(self):
         super(StaticVarCompensator, self).__init__()
-        self.number = 0
-        self.name = ""
-        self.op = OP_ADD
-        self.bus = None
-        self.ctr_bus = None
-        self.droop = 0.0
-        self.ctr_mode = self.MODE_POWER
-        self.units = 1
-        self.qmin = 0
-        self.qmax = 0
-        self.cost = 0
-        self.date = DEFAULT_DATE
-        self.cnd = CND_REGISTRY
-        self.stt = STATUS_ON
-        self.mvar_setpoint = 0
+        self.number: int = 0
+        self.name: str = ""
+        self.op: str = OP_ADD
+        self.bus: Optional[Bus] = None
+        self.ctr_bus: Optional[Bus] = None
+        self.droop: float = 0.0
+        self.ctr_mode: int = self.MODE_POWER
+        self.units: int = 1
+        self.qmin: float = 0
+        self.qmax: float = 0
+        self.cost: float = 0
+        self.date: str = DEFAULT_DATE
+        self.cnd: str = CND_REGISTRY
+        self.stt: int = STATUS_ON
+        self.mvar_setpoint: float = 0
 
     def __str__(self):
         bus_number = self.bus.number if self.bus is not None else 0
@@ -1562,17 +1551,17 @@ class DcLine(SeriesType):
 class AcDcConverter(RecordType):
     def __init__(self):
         super(AcDcConverter, self).__init__()
-        self.ac_bus = None
-        self.dc_bus = None
-        self.neutral_bus = None
+        self.ac_bus: Optional[Bus] = None
+        self.dc_bus: Optional[DcBus] = None
+        self.neutral_bus: Optional[DcBus] = None
 
-    def ac_bus_number(self):
+    def ac_bus_number(self) -> int:
         return self.ac_bus.number if self.ac_bus is not None else 0
 
-    def dc_bus_number(self):
+    def dc_bus_number(self) -> int:
         return self.dc_bus.number if self.dc_bus is not None else 0
 
-    def neutral_bus_number(self):
+    def neutral_bus_number(self) -> int:
         return self.neutral_bus.number if self.neutral_bus is not None else 0
 
 
@@ -1590,37 +1579,37 @@ class AcDcConverterLcc(AcDcConverter):
 
     def __init__(self):
         super(AcDcConverterLcc, self).__init__()
-        self.number = 0
-        self.op = OP_ADD
-        self.metering_end = METERING_END_FROM
+        self.number: int = 0
+        self.op: str = OP_ADD
+        self.metering_end: str = METERING_END_FROM
         # Type: (R)etifier or (I)nverter
-        self.type = AcDcConverterLcc.TYPE_RECTIFIER
-        self.nominal_current = 0.0
-        self.bridges = 2
-        self.xc = 0.0
-        self.vfs = 0.0
-        self.nominal_power = 0.0
-        self.tap_min = 0.8
-        self.tap_max = 1.2
-        self.tap_steps = 99
-        self.control_mode = "P"
-        self.flow_ac_dc = FLOW_MAX
-        self.flow_dc_ac = FLOW_MAX
-        self.rectifier_firing_angle_set = 0.0
-        self.rectifier_firing_angle_min = 0.0
-        self.rectifier_firing_angle_max = 0.0
-        self.inverter_firing_angle_set = 0.0
-        self.inverter_firing_angle_min = 0.0
-        self.inverter_firing_angle_max = 0.0
-        self.ccc_capacitance = 0.0
-        self.cost = 0.0
-        self.date = DEFAULT_DATE
-        self.cnd = CND_REGISTRY
-        self.name = ""
-        self.hzbase = HZBASE
-        self.stt = STATUS_ON
-        self.tap = 1.0
-        self.setpoint = 0.0
+        self.type: str = AcDcConverterLcc.TYPE_RECTIFIER
+        self.nominal_current: float = 0.0
+        self.bridges: int = 2
+        self.xc: float = 0.0
+        self.vfs: float = 0.0
+        self.nominal_power: float = 0.0
+        self.tap_min: float = 0.8
+        self.tap_max: float = 1.2
+        self.tap_steps: int = 99
+        self.control_mode: str = "P"
+        self.flow_ac_dc: float = FLOW_MAX
+        self.flow_dc_ac: float = FLOW_MAX
+        self.rectifier_firing_angle_set: float = 0.0
+        self.rectifier_firing_angle_min: float = 0.0
+        self.rectifier_firing_angle_max: float = 0.0
+        self.inverter_firing_angle_set: float = 0.0
+        self.inverter_firing_angle_min: float = 0.0
+        self.inverter_firing_angle_max: float = 0.0
+        self.ccc_capacitance: float = 0.0
+        self.cost: float = 0.0
+        self.date: str = DEFAULT_DATE
+        self.cnd: str = CND_REGISTRY
+        self.name: str = ""
+        self.hzbase: int = HZBASE
+        self.stt: int = STATUS_ON
+        self.tap: float = 1.0
+        self.setpoint: float = 0.0
 
     def __str__(self):
         ac_bus_number = self.ac_bus.number if self.ac_bus is not None else 0
@@ -1728,28 +1717,28 @@ class AcDcConverterVsc(AcDcConverter):
 
     def __init__(self):
         super(AcDcConverterVsc, self).__init__()
-        self.number = 0
-        self.op = OP_ADD
-        self.metering_end = METERING_END_FROM
-        self.converter_ctr_mode = ""
-        self.voltage_ctr_mode = ""
-        self.aloss = 0.0
-        self.bloss = 0.0
-        self.minloss = 0.0
-        self.flow_ac_dc = 0.0
-        self.flow_dc_ac = 0.0
-        self.max_current = 0.0
-        self.power_factor = 0.0
-        self.qmin = 0.0
-        self.qmax = 0.0
-        self.ctr_bus = None
-        self.rmpct = 0.0
-        self.cost = 0.0
-        self.date = DEFAULT_DATE
-        self.cnd = CND_REGISTRY
-        self.name = ""
-        self.stt = STATUS_ON
-        self.setpoint = 0.0
+        self.number: int = 0
+        self.op: str = OP_ADD
+        self.metering_end: str = METERING_END_FROM
+        self.converter_ctr_mode: str = ""
+        self.voltage_ctr_mode: str = ""
+        self.aloss: float = 0.0
+        self.bloss: float = 0.0
+        self.minloss: float = 0.0
+        self.flow_ac_dc: float = 0.0
+        self.flow_dc_ac: float = 0.0
+        self.max_current: float = 0.0
+        self.power_factor: float = 0.0
+        self.qmin: float = 0.0
+        self.qmax: float = 0.0
+        self.ctr_bus: Optional[Bus] = None
+        self.rmpct: float = 0.0
+        self.cost: float = 0.0
+        self.date: str = DEFAULT_DATE
+        self.cnd: str = CND_REGISTRY
+        self.name: str = ""
+        self.stt: int = STATUS_ON
+        self.setpoint: float = 0.0
 
     def __str__(self):
         ac_bus_number = self.ac_bus.number if self.ac_bus is not None else 0
